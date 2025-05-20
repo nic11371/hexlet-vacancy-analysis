@@ -18,7 +18,7 @@ install:
 	uv sync
 
 lint:
-	flake8 .
+	uv run flake8
 
 makemigrations:
 	uv run manage.py makemigrations
