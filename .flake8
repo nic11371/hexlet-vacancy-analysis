@@ -1,0 +1,13 @@
+[flake8]
+exclude =
+    migrations
+    __pycache__
+    manage.py
+    settings.py
+    task_manager/settings.py
+    admin.py
+    env
+    .env
+    ./env
+    env/
+    .venv/
