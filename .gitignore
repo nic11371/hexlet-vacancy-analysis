@@ -1,0 +1,15 @@
+__pycache__/
+.venv/
+lib/
+bin/
+.idea
+.vscode
+.coverage
+coverage.xml
+.env
+.python-version
+.ruff_cache
+.pytest_cache
+db.sqlite3
+PATH
+itlabormarket_project_plan.md
