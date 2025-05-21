@@ -5,7 +5,7 @@ create-superuser:
 
 help:
 	@echo "Команды make:"
-	@echo "  make create-superuser    - Создать суперпользователя"
+	@echo "  make create-superuser   - Создать суперпользователя"
 	@echo "  make install            - Установить зависимости"
 	@echo "  make lint               - Запустить линтер (flake8)"
 	@echo "  make migrations         - Создать миграции"
