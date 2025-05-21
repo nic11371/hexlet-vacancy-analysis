@@ -4,7 +4,6 @@ exclude =
     __pycache__
     manage.py
     settings.py
-    task_manager/settings.py
     admin.py
     env
     .env
