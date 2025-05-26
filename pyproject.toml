@@ -9,6 +9,7 @@ dependencies = [
     "django-filter>=25.1",
     "dotenv>=0.9.9",
     "psycopg2-binary>=2.9.10",
+    "telethon>=1.40.0",
 ]
 
 [dependency-groups]
