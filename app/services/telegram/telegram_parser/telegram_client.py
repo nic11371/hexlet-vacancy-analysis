@@ -22,27 +22,23 @@ class TelegramParser:
     async def fetch_posts(self, channel_username, limit=10):
         async with self.client as client:
             channel = await client.get_entity(channel_username)
-            history = await client(GetHistoryRequest(
-                peer=channel,
-                limit=limit,
-                offset_date=None,
-                offset_id=0,
-                max_id=0,
-                min_id=0,
-                add_offset=0,
-                hash=0
-            ))
-
-            for message in history.messages:
+            print(f"Парсим канал: {channel_username}, limit={limit}")
+            count = 0
+            async for message in client.iter_messages(channel, limit=limit):
+                print(f"Сообщение: {message.id}, текст: {message.message}")
+                count += 1
                 await self.save_post(
+                    message.id,
                     channel_username,
                     message.message,
                     message.date
                 )
+        print(f"Загружено сообщений: {count}")
 
     @sync_to_async
-    def save_post(self, channel_username, text, date):
+    def save_post(self, message_id, channel_username, text, date):
         TelegramPost.objects.get_or_create(
+            message_id=message_id,
             channel_username=channel_username,
             defaults={
                 'text': text,

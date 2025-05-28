@@ -1,4 +1,4 @@
-.PHONY: help run migrate migrations create-superuser shell test lint install 
+.PHONY: help run migrate migrations create-superuser shell test lint install
 
 create-superuser:
 	uv run manage.py createsuperuser
@@ -34,9 +34,3 @@ shell:
 
 test:
 	uv run manage.py test
-
-
-
-
-
-

@@ -1,7 +1,7 @@
-from .views import ParseChannelView
+from .views import ParseChannelView, ParseVacancyView
 from django.urls import path
 
 urlpatterns = [
     path('', ParseChannelView.as_view(), name="Messages"),
-    # path('<int:pk>/', ViewMessage.as_view(), name="Message"),
+    path('vacancy/', ParseVacancyView.as_view(), name="Vacancy"),
 ]
