@@ -25,14 +25,17 @@ class Vacancy(models.Model):
         max_length=255, verbose_name=('company')
     )
     city = models.CharField(
-        max_length=255, verbose_name=('city')
+        max_length=255, verbose_name=('city'), blank=True, null=True
     )
     salary = models.CharField(
-        max_length=255, verbose_name=('salary')
+        max_length=255, verbose_name=('salary'), blank=True, null=True
     )
     date = models.DateTimeField(verbose_name=('date'))
     link = models.CharField(
-        max_length=255, verbose_name=('link')
+        max_length=255, verbose_name=('link'), blank=True, null=True
+    )
+    phone = models.CharField(
+        max_length=25, verbose_name=('phone'), blank=True, null=True
     )
 
     def __str__(self):
@@ -41,3 +44,12 @@ class Vacancy(models.Model):
     class Meta:
         verbose_name = _("=Vacation=")
         verbose_name_plural = _("=Vacation=")
+
+
+class KeyWord(models.Model):
+    word = models.CharField(
+        max_length=255, verbose_name=('word'), blank=True, null=True
+    )
+
+    def __str__(self):
+        return self.word

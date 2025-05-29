@@ -27,7 +27,7 @@ migrate:
 	uv run manage.py migrate
 
 run:
-	uv run manage.py runserver
+	uv run manage.py runserver && python manage.py run_listener
 
 shell:
 	uv run manage.py shell
