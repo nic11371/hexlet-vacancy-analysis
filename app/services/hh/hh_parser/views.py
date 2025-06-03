@@ -8,7 +8,7 @@ from .models import Vacancy
 def vacancy_list(request):
     Vacancy.objects.all().delete()
     query = 'Python'
-    area = 2
+    area = 1
     per_page = 4
 
     url = 'https://api.hh.ru/vacancies'
