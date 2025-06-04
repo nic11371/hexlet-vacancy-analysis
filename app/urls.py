@@ -16,10 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('hh/', include('app.services.hh.hh_parser.urls')),
     path('superjob/', include('app.services.superjob.superjob_parser.urls')),
     path('telegram/', include('app.services.telegram.telegram_channels.urls')),
+    path('auth/', include('app.users.urls')),
 ]
+
+handler500 = views.custom_server_error
+handler404 = views.custom_not_found_error
