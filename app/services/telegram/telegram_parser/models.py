@@ -4,25 +4,12 @@ from django.utils.translation import gettext_lazy as _
 # Create your models here.
 
 
-class TelegramPost(models.Model):
-    message_id = models.IntegerField()
-    channel_username = models.CharField(max_length=255)
-    text = models.TextField(null=True, blank=True)
-    date = models.DateTimeField()
-
-    # class Meta:
-    #     unique_together = ('channel_username', 'message_id')
-
-    def __str__(self):
-        return f"{self.channel_username} - {self.message_id}"
-
-
 class Vacancy(models.Model):
-    name = models.CharField(
-        max_length=255, verbose_name=('vacancy_name')
+    post = models.CharField(
+        max_length=255, verbose_name=('vacancy_name'), blank=True, null=True
     )
     company = models.CharField(
-        max_length=255, verbose_name=('company')
+        max_length=255, verbose_name=('company'), blank=True, null=True
     )
     city = models.CharField(
         max_length=255, verbose_name=('city'), blank=True, null=True
@@ -30,26 +17,51 @@ class Vacancy(models.Model):
     salary = models.CharField(
         max_length=255, verbose_name=('salary'), blank=True, null=True
     )
-    date = models.DateTimeField(verbose_name=('date'))
     link = models.CharField(
         max_length=255, verbose_name=('link'), blank=True, null=True
     )
     phone = models.CharField(
         max_length=25, verbose_name=('phone'), blank=True, null=True
     )
+    busyness = models.CharField(
+        max_length=25, verbose_name=('busyness'), blank=True, null=True
+    )
+    date = models.DateTimeField(verbose_name=('date'))
 
     def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = _("=Vacation=")
-        verbose_name_plural = _("=Vacation=")
+        return self.post
 
 
 class KeyWord(models.Model):
-    word = models.CharField(
-        max_length=255, verbose_name=('word'), blank=True, null=True
+    post = models.CharField(
+        max_length=255, verbose_name=('post'), blank=True, null=True
+    )
+    company = models.CharField(
+        max_length=255, verbose_name=('company'), blank=True, null=True
+    )
+    salary = models.CharField(
+        max_length=255, verbose_name=('salary'), blank=True, null=True
+    )
+    busyness = models.CharField(
+        max_length=255, verbose_name=('busyness'), blank=True, null=True
+    )
+    city = models.CharField(
+        max_length=255, verbose_name=('city'), blank=True, null=True
     )
 
+
     def __str__(self):
-        return self.word
+        return self.post
+
+
+class Channels(models.Model):
+    channel_id = models.CharField(
+        max_length=255, verbose_name=('channel_id'), blank=True, null=True
+    )
+    channel_username = models.CharField(
+        max_length=255, verbose_name=('channel_username'), blank=True, null=True
+    )
+
+
+    def __str__(self):
+        return self.channel_username
