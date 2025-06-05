@@ -4,7 +4,7 @@ from django.core.validators import validate_email
 User = get_user_model()
 
 
-REQUIRED_FIELDS_MSG= "All fields are required"
+REQUIRED_FIELDS_MSG = "All fields are required"
 INVALID_EMAIL_MSG = "Invalid email"
 SHORT_PASSWORD_MSG = "Pass must contain at least 8 characters, \
                         mininum one digital and one big letter"
@@ -22,12 +22,13 @@ def normalize_email(email):
         return f'{local}@{domain}'
     return email
 
+
 def check_error_validation(register_data):
 
     email = register_data.get("email")
     password = register_data.get("password")
     password_again = register_data.get("passwordAgain")
-    accept_terms = register_data.get("acceptTerms") 
+    accept_terms = register_data.get("acceptTerms")
 
     if not all([email, password, password_again, accept_terms]):
         return REQUIRED_FIELDS_MSG, 400
@@ -42,5 +43,5 @@ def check_error_validation(register_data):
     email = normalize_email(email)
     if User.objects.filter(email=email, is_active=True).exists():
         return EMAIL_ALREADY_EXIST_MSG, 409
-    
+
     return None

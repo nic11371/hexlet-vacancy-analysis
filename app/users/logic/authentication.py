@@ -10,5 +10,5 @@ class EmailAuthBackend(ModelBackend):
             user = UserModel.objects.get(email=email)
             if user.check_password(password) and user.is_active:
                 return user
-        except (UserModel.DoesNotExist,UserModel.MultipleObjectsReturned):
+        except (UserModel.DoesNotExist, UserModel.MultipleObjectsReturned):
             return None
