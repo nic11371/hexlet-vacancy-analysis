@@ -18,6 +18,7 @@ DATA = {
         "acceptTerms": True
 }
 
+
 class BaseAuthTest(TestCase):
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)
@@ -40,6 +41,7 @@ class BaseAuthTest(TestCase):
         response = client.get(f'/auth/activate/{uidb64}/{token}/')
         return response
 
+
 class UsersTest(BaseAuthTest):
     def test_register_user_with_csrf(self):
         data = DATA
@@ -61,7 +63,9 @@ class UsersTest(BaseAuthTest):
         )
         self.assertTrue(User.objects.filter(email=DATA["email"]).exists())
 
-    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    @override_settings(
+            EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'
+    )
     def test_email_is_send(self):
         data = DATA
         response = self.register_user(self.client, data)
@@ -71,7 +75,9 @@ class UsersTest(BaseAuthTest):
         self.assertIn('To ensure registration', mail.outbox[0].body)
         self.assertIn('user123@example.com', mail.outbox[0].to)
 
-    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    @override_settings(
+            EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'
+    )
     def test_user_activation_from_link_email(self):
         data = DATA
         response = self.register_user(self.client, data)
@@ -100,7 +106,9 @@ class UsersTest(BaseAuthTest):
         user = User.objects.get(email=DATA["email"])
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
         token = account_activation_token.make_token(user)
-        activation_response = self.client.get(f'/auth/activate/{uidb64}/{token}/')
+        activation_response = self.client.get(
+            f'/auth/activate/{uidb64}/{token}/'
+        )
         self.assertIn(activation_response.status_code, [201, 302])
         user.refresh_from_db()
         self.assertTrue(user.is_active)
