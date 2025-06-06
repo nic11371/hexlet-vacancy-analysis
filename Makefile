@@ -29,6 +29,9 @@ migrate:
 run:
 	uv run manage.py runserver
 
+run-telegram:
+	uv run manage.py telegram_parcer
+
 shell:
 	uv run manage.py shell
 
