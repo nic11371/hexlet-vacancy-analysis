@@ -29,7 +29,6 @@ def safe_send_mail(
         retry_delay=RETRY_DELAY):
 
     attempt = 1
-    # Try send mail
     while attempt <= max_retries:
         try:
             send_mail(

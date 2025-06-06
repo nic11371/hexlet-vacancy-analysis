@@ -45,23 +45,19 @@ def create_user(data):
 
 
 def register_user(data):
-    # Validation
     if check := check_error_validation(data):
         msg, status = check
         raise custom_ex.ValidationError(message=msg, code=status)
 
-    # Create a user
     try:
         user = create_user(data)
     except OperationalError:
         raise custom_ex.CreateUserError(message="Database Errors", code=500)
 
-    # Send message with activation link
     try:
         message = create_activation_mail(user, data)
         safe_send_mail(message=message, recipient=[user.email])
     except custom_ex.SendEmailError:
         raise
 
-    # Success
     return user.id

@@ -9,8 +9,6 @@ from .logic.validators import normalize_email
 import app.users.exceptions as custom_ex
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
-# from django.views.decorators.csrf import csrf_exempt
-# from django.utils.decorators import method_decorator
 from django.contrib.sites.shortcuts import get_current_site
 from .logic.tokens import account_activation_token
 import logging
@@ -19,10 +17,7 @@ User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
-# ********# Rest API (non DRF) #******
 
-
-# @method_decorator(csrf_exempt, name="dispatch")
 class CreateUserView(View):
     def get(self, request):
         pass
@@ -78,10 +73,8 @@ class ActivateUser(View):
             )
 
 
-# @method_decorator(csrf_exempt, name="dispatch")
 class LoginUserView(View):
     def post(self, request):
-        # Read data from request
         try:
             data = read_data_from_request(request)
         except custom_ex.ValidationError as e:
@@ -119,7 +112,6 @@ class LoginUserView(View):
         )
 
 
-# @method_decorator(csrf_exempt, name="dispatch")
 class LogoutUserView(View):
     def post(self, request):
         logout(request)
