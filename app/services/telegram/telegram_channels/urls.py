@@ -3,8 +3,8 @@ from .views import IndexChannelView, AddChannelView, ShowChannelView, DeleteChan
 
 
 urlpatterns = [
-    path('', IndexChannelView.as_View(), name='channels_list'),
-    path('add/', AddChannelView.as_View(), name='channels_add'),
-    path('show/<int:id>', AddChannelView.as_View(), name='channels_show'),
-    path('delete/<int:id>', DeleteChannelView.as_View(), name='channels_delete'),
+    path('', IndexChannelView.as_view(), name='channels_list'),
+    path('add/', AddChannelView.as_view(), name='channels_add'),
+    path('<int:pk>/show/', ShowChannelView.as_view(), name='channels_show'),
+    path('<int:pk>/delete/', DeleteChannelView.as_view(), name='channels_delete'),
 ]
