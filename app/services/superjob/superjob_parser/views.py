@@ -2,6 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 from django.http import JsonResponse
 from .models import SuperJob
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 def superjob_list(request):
@@ -11,7 +16,7 @@ def superjob_list(request):
     count = 4
 
     url = 'https://api.superjob.ru/2.0/vacancies'
-    headers = {"X-Api-App-Id": "v3.r.139102357.df987f5ddf958483a5de626fd908a60d38c81357.87b9bc1736bea42137acdaa4fc2a9cb579ed67c3"}
+    headers = {"X-Api-App-Id": SECRET_KEY}
     params = {
         'keyword': keyword,
         'town': town,
