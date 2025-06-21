@@ -30,7 +30,7 @@ run:
 	uv run manage.py runserver
 
 run-telegram:
-	uv run manage.py telegram_parcer
+	uv run manage.py run_listener
 
 shell:
 	uv run manage.py shell

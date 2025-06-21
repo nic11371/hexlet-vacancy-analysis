@@ -1,10 +1,9 @@
-import os
 import re
-from telethon.sync import TelegramClient
 from telethon import events
 from .models import Vacancy, KeyWord
 from dotenv import load_dotenv
 from asgiref.sync import sync_to_async
+from app.services.telegram.telegram_client import TelegramChannelClient
 
 load_dotenv()
 
@@ -18,8 +17,8 @@ class KeywordExtractor:
             'busyness': [],
             'post': []
         }
-        self.load_keywords()
 
+    @sync_to_async
     def load_keywords(self):
         for kw in KeyWord.objects.all():
             for field in self.keywords:
@@ -60,12 +59,16 @@ class LineParser:
 
 
 class TelegramParser:
-    def __init__(self, api_id=os.getenv('TELEGRAM_API_ID'), api_hash=os.getenv('TELEGRAM_API_HASH'), session_name=os.getenv('TELEGRAM_SESSION')):
-        self.api_id = api_id
-        self.api_hash = api_hash
-        self.session_name = session_name
-        self.client = TelegramClient(self.session_name, self.api_id, self.api_hash, system_version="4.10.5 beta x64")
+    def __init__(self):
+        self.client = None
         self.keywords = KeywordExtractor()
+
+    async def initialize(self):
+        client_wrapper = await TelegramChannelClient.create()
+        self.client = client_wrapper.client
+
+        self.keywords = KeywordExtractor()
+        await self.keywords.load_keywords()
 
     @sync_to_async
     def parse_vacancy_from_text(self, text):
@@ -113,11 +116,20 @@ class TelegramParser:
     async def run_listener(self, channel_username):
         @self.client.on(events.NewMessage(chats=channel_username))
         async def new_post_handler(event):
-            message = event.message.message
-            parsed = await self.parse_vacancy_from_text(message)
-            if parsed:
-                await self.save_vacancy(parsed, event.message.date)
-                print("Сохранено в БД")
+            try:
+                message = event.message.message
+                parsed = await self.parse_vacancy_from_text(message)
+                if parsed:
+                    await self.save_vacancy(parsed, event.message.date)
+                    print(f"Сохранено в БД: {parsed.get('post')}")
+            except Exception as e:
+                print(f"Ошибка при обработке сообщения: {e}")
 
-        await self.client.start()
-        await self.client.run_until_disconnected()
+        try:
+            await self.client.start()
+            print(f"Слушатель запущен для канала: {channel_username}")
+            await self.client.run_until_disconnected()
+        except Exception as e:
+            print(f"Ошибка в работе клиента: {e}")
+        finally:
+            print("Слушатель остановлен")
