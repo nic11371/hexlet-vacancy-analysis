@@ -18,10 +18,21 @@ class Command(BaseCommand):
         parser = TelegramParserView()
         await parser.initialize()  # Инициализация клиента
         print("слушатель телеграм работает!")
-        channels = await sync_to_async(
-            lambda: list(
-                Channel.objects.filter(status='active').values_list(
-                    'username', flat=True)))()
-        tasks = [parser.channel_listener(channel) for channel in channels]
-        await asyncio.gather(*tasks)
-        print("слушатель телеграм не работает")
+
+        listened_channels = set()
+
+        while True:
+
+            channels = await sync_to_async(
+                lambda: list(
+                    Channel.objects.filter(status='active').values_list(
+                        'username', flat=True)))()
+
+            new_channels = [c for c in channels if c not in listened_channels]
+
+            for channel in new_channels:
+                print(f"▶️ Подключение к новому каналу: {channel}")
+                asyncio.create_task(parser.channel_listener(channel))
+                listened_channels.add(channel)
+
+            await asyncio.sleep(300)
