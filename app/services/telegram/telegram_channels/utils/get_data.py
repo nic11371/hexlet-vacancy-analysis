@@ -4,7 +4,7 @@ from telethon.errors import (
     ChannelInvalidError,
     ChannelPrivateError,
     UsernameNotOccupiedError,
-    RpcError
+    RPCError
 )
 
 
@@ -30,7 +30,7 @@ class DataChannel:
                 'details': str(e)},
                 status=400)
 
-        except RpcError as e:
+        except RPCError as e:
             return JsonResponse({
                 'status': 'error',
                 'error': 'Telegram RPC error',
