@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -49,19 +48,5 @@ class KeyWord(models.Model):
         max_length=255, verbose_name=('city'), blank=True, null=True
     )
 
-
     def __str__(self):
         return self.post
-
-
-class Channels(models.Model):
-    channel_id = models.CharField(
-        max_length=255, verbose_name=('channel_id'), blank=True, null=True
-    )
-    channel_username = models.CharField(
-        max_length=255, verbose_name=('channel_username'), blank=True, null=True
-    )
-
-
-    def __str__(self):
-        return self.channel_username
