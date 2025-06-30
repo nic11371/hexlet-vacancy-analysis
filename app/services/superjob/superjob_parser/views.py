@@ -62,7 +62,7 @@ def superjob_list(request):
                 place_of_work = item.get('place_of_work')
                 city = item.get('town')
                 SuperJob.objects.update_or_create(
-                    syperjob_id=item.get('id'),
+                    superjob_id=item.get('id'),
                     defaults={
                         'title': item.get('profession', ''),
                         'url': item.get('link', ''),
