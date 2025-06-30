@@ -9,7 +9,7 @@ class SuperJob(models.Model):
     company_name = models.CharField(max_length=255)
     company_id = models.IntegerField(unique=True)
     company_city = models.CharField(max_length=100)
-    salary = models.IntegerField(null=True, blank=True)
+    salary = models.CharField(max_length=120, null=True)
     experience = models.CharField(max_length=50)
     type_of_work = models.CharField(max_length=40, null=True)
     place_of_work = models.CharField(max_length=255, null=True)
