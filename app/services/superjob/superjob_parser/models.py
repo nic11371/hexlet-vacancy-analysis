@@ -16,7 +16,7 @@ class SuperJob(models.Model):
     education = models.CharField(max_length=30, null=True)
     description = models.TextField(blank=True)
     city = models.CharField(max_length=255)
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=255, null=True)
     contacts = models.CharField(max_length=250, null=True)
     published_at = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
