@@ -1,9 +1,11 @@
+import os
+
 import requests
 from bs4 import BeautifulSoup
 from django.http import JsonResponse
-from .models import SuperJob
 from dotenv import load_dotenv
-import os
+
+from .models import SuperJob
 
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
