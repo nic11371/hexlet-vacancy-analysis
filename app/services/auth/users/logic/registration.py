@@ -5,14 +5,13 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-import app.services.auth.users.exceptions as custom_ex
-from app.services.auth.users.logic.mail import safe_send_mail
-from app.services.auth.users.logic.validators import (
+from .. import exceptions as custom_ex
+from .mail import safe_send_mail
+from .tokens import account_activation_token
+from .validators import (
     check_error_validation,
     normalize_email,
 )
-
-from .tokens import account_activation_token
 
 User = get_user_model()
 

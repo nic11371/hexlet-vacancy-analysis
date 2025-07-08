@@ -10,7 +10,7 @@ from smtplib import (
 
 from django.core.mail import send_mail
 
-from app.services.auth.users.exceptions import SendEmailError
+from ..exceptions import SendEmailError
 
 logger = logging.getLogger(__name__)
 

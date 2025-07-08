@@ -8,8 +8,7 @@ from django.utils.http import urlsafe_base64_decode
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-import app.services.auth.users.exceptions as custom_ex
-
+from . import exceptions as custom_ex
 from .logic.registration import register_user
 from .logic.tokens import account_activation_token
 from .logic.utils import read_data_from_request
