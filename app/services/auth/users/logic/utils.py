@@ -1,5 +1,6 @@
-import app.services.auth.users.exceptions as custom_ex
 import json
+
+import app.services.auth.users.exceptions as custom_ex
 
 
 def read_data_from_request(request):

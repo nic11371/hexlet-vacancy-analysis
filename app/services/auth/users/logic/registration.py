@@ -1,14 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.db import OperationalError
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
 from django.template.loader import render_to_string
-from app.services.auth.users.logic.mail import safe_send_mail
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
 import app.services.auth.users.exceptions as custom_ex
-from app.services.auth.users.logic.validators import check_error_validation, normalize_email
+from app.services.auth.users.logic.mail import safe_send_mail
+from app.services.auth.users.logic.validators import (
+    check_error_validation,
+    normalize_email,
+)
 
 from .tokens import account_activation_token
-from django.urls import reverse
 
 User = get_user_model()
 

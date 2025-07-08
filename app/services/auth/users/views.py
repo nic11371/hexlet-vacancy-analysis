@@ -1,17 +1,19 @@
+import logging
+
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.sites.shortcuts import get_current_site
+from django.http import JsonResponse
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.contrib.auth import get_user_model
-from django.contrib.auth import logout, login, authenticate
-from django.http import JsonResponse
-from .logic.utils import read_data_from_request
-from .logic.registration import register_user
-from .logic.validators import normalize_email
+
 import app.services.auth.users.exceptions as custom_ex
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
-from django.contrib.sites.shortcuts import get_current_site
+
+from .logic.registration import register_user
 from .logic.tokens import account_activation_token
-import logging
+from .logic.utils import read_data_from_request
+from .logic.validators import normalize_email
 
 User = get_user_model()
 

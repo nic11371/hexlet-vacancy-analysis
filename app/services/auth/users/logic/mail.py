@@ -1,10 +1,13 @@
 import logging
-import time
 import socket
+import time
 from smtplib import (
-    SMTPException, SMTPServerDisconnected,
-    SMTPAuthenticationError, SMTPConnectError
+    SMTPAuthenticationError,
+    SMTPConnectError,
+    SMTPException,
+    SMTPServerDisconnected,
 )
+
 from django.core.mail import send_mail
 
 from app.services.auth.users.exceptions import SendEmailError

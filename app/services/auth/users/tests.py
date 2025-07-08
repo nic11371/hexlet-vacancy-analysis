@@ -1,12 +1,14 @@
-import re
-from django.test import Client, TestCase
 import json
-from django.test.utils import override_settings
-from django.core import mail
+import re
+
 from django.contrib.auth import get_user_model
-from .logic.tokens import account_activation_token
-from django.utils.http import urlsafe_base64_encode
+from django.core import mail
+from django.test import Client, TestCase
+from django.test.utils import override_settings
 from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
+from .logic.tokens import account_activation_token
 
 User = get_user_model()
 

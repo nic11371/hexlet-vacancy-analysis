@@ -1,6 +1,8 @@
 import re
+
 from django.contrib.auth import get_user_model
 from django.core.validators import validate_email
+
 User = get_user_model()
 
 
