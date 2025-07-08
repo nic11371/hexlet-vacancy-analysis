@@ -1,5 +1,5 @@
 from django.contrib import admin
-from app.users.models import User
+from app.services.auth.users.models import User
 from django.contrib.auth.admin import UserAdmin as UAdmin
 
 

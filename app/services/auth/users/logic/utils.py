@@ -1,4 +1,4 @@
-import app.users.exceptions as custom_ex
+import app.services.auth.users.exceptions as custom_ex
 import json
 
 

@@ -23,7 +23,7 @@ urlpatterns = [
     path('hh/', include('app.services.hh.hh_parser.urls')),
     path('superjob/', include('app.services.superjob.superjob_parser.urls')),
     path('telegram/', include('app.services.telegram.telegram_channels.urls')),
-    path('auth/', include('app.users.urls')),
+    path('auth/', include('app.services.auth.users.urls')),
 ]
 
 handler500 = views.custom_server_error

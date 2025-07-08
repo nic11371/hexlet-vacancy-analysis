@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from .logic.utils import read_data_from_request
 from .logic.registration import register_user
 from .logic.validators import normalize_email
-import app.users.exceptions as custom_ex
+import app.services.auth.users.exceptions as custom_ex
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.contrib.sites.shortcuts import get_current_site

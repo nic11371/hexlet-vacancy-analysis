@@ -34,7 +34,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 # Application definition
 
 INSTALLED_APPS = [
-    'app.users',
+    'app.services.auth.users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -82,31 +82,31 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.{}'.format(
-            os.getenv('DATABASE_ENGINE', 'sqlite3')
-        ),
-        'NAME': os.getenv('DATABASE_NAME', 'postgres'),
-        'USER': os.getenv('DATABASE_USERNAME', 'postgres'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'password'),
-        'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DATABASE_PORT', '5432'),
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.{}'.format(
+#             os.getenv('DATABASE_ENGINE', 'sqlite3')
+#         ),
+#         'NAME': os.getenv('DATABASE_NAME', 'postgres'),
+#         'USER': os.getenv('DATABASE_USERNAME', 'postgres'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'password'),
+#         'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
+#         'PORT': os.getenv('DATABASE_PORT', '5432'),
 #     }
 # }
 
-# DATABASE_URL = os.getenv('DATABASE_URL')
-# if DATABASE_URL:
-#     DATABASES['default'] = dj_database_url.config(
-#         default=DATABASE_URL, conn_max_age=600
-#     )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.config(
+        default=DATABASE_URL, conn_max_age=600
+    )
 
 
 PASSWORD_HASHERS = [
@@ -153,7 +153,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
-    'app.users.logic.authentication.EmailAuthBackend',
+    'app.services.auth.users.logic.authentication.EmailAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 

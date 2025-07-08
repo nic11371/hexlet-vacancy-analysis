@@ -3,9 +3,9 @@ from django.db import OperationalError
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.template.loader import render_to_string
-from app.users.logic.mail import safe_send_mail
-import app.users.exceptions as custom_ex
-from app.users.logic.validators import check_error_validation, normalize_email
+from app.services.auth.users.logic.mail import safe_send_mail
+import app.services.auth.users.exceptions as custom_ex
+from app.services.auth.users.logic.validators import check_error_validation, normalize_email
 
 from .tokens import account_activation_token
 from django.urls import reverse
