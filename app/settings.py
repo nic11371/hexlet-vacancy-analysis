@@ -155,8 +155,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
     'app.services.auth.users.logic.authentication.EmailAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
     'app.services.auth.yandex_id.backend.YandexBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 EMAIL_BACKEND = os.environ.get(
