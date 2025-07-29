@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import authenticate, get_user_model, login
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
@@ -45,35 +45,18 @@ def start_auth(request):
 
 
 def auth_callback(request):
-    """
-    Обрабатывает callback от Яндекса: проверяет state, обменивает code на токен,
-    запрашивает информацию о пользователе, сохраняет его в БД и логинит.
-    """
-    # Шаг 1: проверка state и получение кода
+    # проверяем state и получаем код
     code_or_response = _validate_state_and_get_code(request)
     if isinstance(code_or_response, HttpResponse):
         return code_or_response
     code = code_or_response
 
-    # Шаг 2: обмен code на access_token
-    token_or_response = _exchange_token_for_access_token(code)
-    if isinstance(token_or_response, HttpResponse):
-        return token_or_response
-    access_token = token_or_response
+    # аутентификация через кастомный бэкенд
+    user = authenticate(request, code=code)
+    if user is None:
+        return HttpResponse("Authentication failed", status=400)
 
-    # Шаг 3: запрос инфы о пользователе
-    info_or_response = _fetch_user_info(access_token)
-    if isinstance(info_or_response, HttpResponse):
-        return info_or_response
-    info = info_or_response
-
-    # Шаг 4: создание или обновление пользователя
-    user_or_response = _get_or_create_user(info)
-    if isinstance(user_or_response, HttpResponse):
-        return user_or_response
-    user = user_or_response
-
-    # Шаг 5: логиним пользователя
+    # логиним и редиректим обратно
     login(request, user)
     return redirect("yandex_login")
 

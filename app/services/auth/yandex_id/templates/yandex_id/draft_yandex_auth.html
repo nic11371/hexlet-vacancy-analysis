@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +7,6 @@
 </head>
 <body>
     <header>
-        <p>мы оставим только одну бд из AUTHENTICATION_BACKENDS (файл settings.py)?</p>
-        <p>потому что сейчас работает с любой, но только с одной.</p>
-        <p>с доступом в админку эта: 'django.contrib.auth.backends.ModelBackend'</p>
-        <br>
-        <br>
-        <br>
-        
         {% if yandex_user %}
             {% if yandex_user.first_name or yandex_user.last_name %}
                 <p>Привет, {{ yandex_user.first_name }} {{ yandex_user.last_name }}!</p>
