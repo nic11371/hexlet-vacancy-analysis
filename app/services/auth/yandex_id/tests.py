@@ -8,6 +8,10 @@ from app.services.auth.yandex_id import views
 
 
 class YandexIDURLTests(TestCase):
+    """
+    проверяем, что маршруты и имена URL-ов остались прежними.
+    """
+
     def test_urls_resolve(self):
         self.assertEqual(resolve("/auth/yandex/").func, views.draft_login)
         self.assertEqual(resolve("/auth/yandex/start/").func, views.start_auth)
@@ -20,31 +24,71 @@ class YandexIDURLTests(TestCase):
 
 
 class YandexIDViewsTests(TestCase):
+    """
+    проверки draft-страницы, старта OAuth и callback-а.
+    """
+
     def setUp(self):
         self.client = Client()
+
+    # ----- draft_login ------------------------------------------------------
 
     def test_draft_login_shows_link(self):
         resp = self.client.get(reverse("yandex_login"))
         self.assertContains(resp, "Войти через Yandex ID")
 
+    # ----- start_auth -------------------------------------------------------
+
     def test_start_auth_redirects(self):
         resp = self.client.get(reverse("yandex_auth"))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(resp["Location"].startswith("https://oauth.yandex.ru/authorize"))
+        self.assertTrue(
+            resp["Location"].startswith("https://oauth.yandex.ru/authorize"),
+            resp["Location"],
+        )
+
+    # ----- auth_callback: невалидный state ----------------------------------
 
     def test_auth_callback_invalid_state(self):
         url = reverse("yandex_callback") + "?state=wrong&code=any"
         resp = self.client.get(url)
         self.assertContains(resp, "Invalid OAuth state", status_code=400)
 
-    @patch("app.services.auth.yandex_id.views.requests.get")
-    @patch("app.services.auth.yandex_id.views.requests.post")
+    # ----- auth_callback: backend вернул None -------------------------------
+
+    def test_auth_callback_authentication_failed(self):
+        """
+        если YandexBackend ничего не вернул, получаем 400.
+        """
+        # сначала запрашиваем старт, чтобы появился правильный state
+        _ = self.client.get(reverse("yandex_auth"))
+        state = self.client.session["oauth_state"]
+
+        with patch(
+            "app.services.auth.yandex_id.views.authenticate", return_value=None
+        ):
+            resp = self.client.get(
+                reverse("yandex_callback") + f"?state={state}&code=badcode"
+            )
+        self.assertContains(resp, "Authentication failed", status_code=400)
+
+    # ----- auth_callback: успешный OAuth-flow -------------------------------
+
+    @patch("app.services.auth.yandex_id.backend.requests.get")
+    @patch("app.services.auth.yandex_id.backend.requests.post")
     def test_full_oauth_flow(self, mock_post, mock_get):
-        # Мокаем обмен code->token
+        """
+        проверяем happy-path: обмен code -> token, получение профиля,
+        сохранение пользователя, логин и редирект.
+        """
+
+        # мокаем запрос code  ->  token
         mock_post.return_value = SimpleNamespace(
-            raise_for_status=lambda: None, json=lambda: {"access_token": "token"}
+            raise_for_status=lambda: None,
+            json=lambda: {"access_token": "token123"},
         )
-        # Мокаем запрос user info
+
+        # мокаем запрос профиля
         mock_get.return_value = SimpleNamespace(
             raise_for_status=lambda: None,
             json=lambda: {
@@ -53,19 +97,21 @@ class YandexIDViewsTests(TestCase):
                 "last_name": "Ivanov",
             },
         )
-        # Запускаем flow: старт и callback
-        resp1 = self.client.get(reverse("yandex_auth"))
-        self.assertEqual(resp1.status_code, 302)
+
+        # генерируем state (start_auth) — чтобы прошла проверка
+        resp_start = self.client.get(reverse("yandex_auth"))
+        self.assertEqual(resp_start.status_code, 302)
         state = self.client.session["oauth_state"]
 
-        resp2 = self.client.get(reverse("yandex_callback") + f"?state={state}&code=abc")
-        # После успешного callback — редирект обратно на draft
-        self.assertRedirects(resp2, reverse("yandex_login"))
+        # вызываем callback с правильным state & любым code
+        resp_cb = self.client.get(
+            reverse("yandex_callback") + f"?state={state}&code=abc"
+        )
+        self.assertRedirects(resp_cb, reverse("yandex_login"))
 
-        # Проверяем, что пользователь создался
+        # убеждаемся, что пользователь создан и данные записаны
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
         user = User.objects.get(email="test@yandex.com")
-        self.assertEqual(user.first_name, "Ivan")
-        self.assertEqual(user.last_name, "Ivanov")
+        self.assertEqual((user.first_name, user.last_name), ("Ivan", "Ivanov"))
