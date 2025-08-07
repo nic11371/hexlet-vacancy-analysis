@@ -132,12 +132,12 @@ class DeleteChannelView(View):
         channel = get_object_or_404(Channel, id=channel_id)
         try:
             channel.delete()
-        except (Http404, IntegrityError, DataError) as e:
+        except (IntegrityError, DataError) as e:
             logger.error("Ошибка удаления канала")
             return JsonResponse({
                 'status': 'error',
                 'error': 'Channel not found',
                 'details': str(e)
-            }, status=404)
+            }, status=200)
         logger.info("Канал успешно удален")
-        return {'status': 'ok', 'details': 'The channel was deleted'}
+        return JsonResponse({'status': 'ok', 'details': 'The channel was deleted'})
