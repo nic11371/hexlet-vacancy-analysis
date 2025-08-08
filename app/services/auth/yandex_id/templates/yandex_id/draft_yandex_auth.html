@@ -7,6 +7,7 @@
 </head>
 <body>
     <header>
+        <p>Для авторизации через Яндекс ИД нужен <a href="http://localhost:8000/auth/yandex/">localhost</a> вместо 127.0.0.1</p>
         {% if yandex_user %}
             {% if yandex_user.first_name or yandex_user.last_name %}
                 <p>Привет, {{ yandex_user.first_name }} {{ yandex_user.last_name }}!</p>

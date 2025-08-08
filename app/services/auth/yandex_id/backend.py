@@ -55,8 +55,22 @@ class YandexBackend(BaseBackend):
             "first_name": info.get("first_name", ""),
             "last_name": info.get("last_name", ""),
         }
-        user, _ = User.objects.get_or_create(email=email, defaults=defaults)
-        # можно обновить имя/фамилию
+        user, created = User.objects.get_or_create(email=email, defaults=defaults)
+
+        # при повторной авторизации обновляем имя и фамилию,
+        # если они отличаются от данных из Яндекса
+        first_name = defaults["first_name"]
+        last_name = defaults["last_name"]
+        updated = False
+        if not created:
+            if first_name and user.first_name != first_name:
+                user.first_name = first_name
+                updated = True
+            if last_name and user.last_name != last_name:
+                user.last_name = last_name
+                updated = True
+            if updated:
+                user.save(update_fields=["first_name", "last_name"])
         return user
 
     def get_user(self, user_id):
