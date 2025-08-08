@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SocialIcon } from 'react-social-icons';
 import { Send } from 'lucide-react';
 import { useSubscriptionForm } from '../../../hooks/useSubscriptionForm';
+import { TextInput, ActionIcon, Group, Text } from '@mantine/core';
 
 const navSections = [
   {
@@ -51,52 +52,51 @@ const SubscriptionForm = () => {
 
   return (
     <div className='text-left'>
-      <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+      <Text size="sm" fw={700} className="text-gray-300 tracking-wider uppercase">
         Subscribe
-      </h3>
+      </Text>
       <form onSubmit={handleSubmit} className="mt-4">
-        <div className="flex">
-          <input
-            type="email"
+        <Group gap="xs">
+          <TextInput
+            styles={{
+              input: {
+                backgroundColor: 'white',
+                color: '#111827',
+                borderColor: 'transparent',
+              },
+            }}
             placeholder="Ваш e-mail"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.currentTarget.value)}
             disabled={status === 'loading'}
-            className="w-full px-4 py-2 text-gray-900 bg-white border border-transparent rounded-l-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            rightSection={
+              <ActionIcon 
+                type="submit" 
+                size="lg" 
+                color="blue" 
+                variant="filled" 
+                loading={status === 'loading'}
+                aria-label="Subscribe"
+              >
+                <Send size={18} />
+              </ActionIcon>
+            }
           />
-          <button
-            type="submit"
-            aria-label="Subscribe"
-            disabled={status === 'loading'}
-            className="flex-shrink-0 px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500"
-          >
-            <Send className="h-5 w-5" />
-          </button>
-        </div>
+        </Group>
       </form>
       {message && (
-        <p className={`mt-2 text-sm ${status === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+        <Text
+          size="sm"
+          mt="xs"
+          c={status === 'success' ? 'green' : 'red'}
+        >
           {message}
-        </p>
+        </Text>
       )}
       <div className="mt-6 flex space-x-3">
-        <SocialIcon 
-          url="https://vk.com" 
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ height: 24, width: 24 }}
-          bgColor="transparent"
-          fgColor="#a0aec0"
-        />
-        <SocialIcon 
-          url="https://web.telegram.org/a/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ height: 24, width: 24 }}
-          bgColor="transparent"
-          fgColor="#a0aec0"
-        />
+        <SocialIcon url="https://vk.com" target="_blank" rel="noopener noreferrer" style={{ height: 24, width: 24 }} bgColor="transparent" fgColor="#a0aec0" />
+        <SocialIcon url="https://telegram.org" target="_blank" rel="noopener noreferrer" style={{ height: 24, width: 24 }} bgColor="transparent" fgColor="#a0aec0" />
       </div>
     </div>
   );
