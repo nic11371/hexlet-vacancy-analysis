@@ -20,13 +20,131 @@
                 <button type="submit">Выйти</button>
             </form>
         {% else %}
-            <a href="{% url 'yandex_auth' %}">Войти через Yandex ID</a> <br>
+            <a href="{% url 'yandex_auth' %}">Войти через Yandex ID</a> <br><br>
+
+            {% comment %} Форма регистрации по электронной почте {% endcomment %}
+            <h2>Или зарегистрируйтесь по электронной&nbsp;почте</h2>
+            <form id="emailRegistrationForm">
+                {% csrf_token %}
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required><br>
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required><br>
+                <label for="passwordAgain">Повторите пароль:</label>
+                <input type="password" id="passwordAgain" name="passwordAgain" required><br>
+                <label>
+                    <input type="checkbox" name="acceptTerms" required>
+                    Я принимаю условия
+                </label><br>
+                <button type="submit">Зарегистрироваться</button>
+            </form>
+            <div id="registerMessage"></div>
+
+            {% comment %} Форма входа по электронной почте {% endcomment %}
+            <h2>Или войдите по электронной&nbsp;почте</h2>
+            <form id="emailLoginForm">
+                {% csrf_token %}
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail" name="email" required><br>
+                <label for="loginPassword">Пароль:</label>
+                <input type="password" id="loginPassword" name="password" required><br>
+                <button type="submit">Войти</button>
+            </form>
+            <div id="loginMessage"></div>
         {% endif %}
 
-        <br>
-        <br>
-        <br>
+        <br><br><br>
         <a href="/admin" target="_blank">admin</a>
     </header>
+
+    {% comment %} Скрипт для отправки данных регистрации и входа в формате JSON {% endcomment %}
+    <script>
+        /*
+         * Помощник для извлечения CSRF-токена из формы. Django вставляет
+         * скрытое поле `csrfmiddlewaretoken` через `{% csrf_token %}`.
+         */
+        function getCsrfTokenFromForm(form) {
+            const input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+            return input ? input.value : '';
+        }
+
+        // Запрашиваем токен, чтобы установить cookie 'csrftoken'
+        fetch('/auth/csrf/', { credentials: 'same-origin' });
+
+        // Обработчик формы регистрации
+        const regForm = document.getElementById('emailRegistrationForm');
+        if (regForm) {
+            regForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const passwordAgain = document.getElementById('passwordAgain').value;
+                const acceptTerms = document.querySelector('input[name="acceptTerms"]').checked;
+                const data = {
+                    email: email,
+                    password: password,
+                    passwordAgain: passwordAgain,
+                    acceptTerms: acceptTerms
+                };
+                fetch('/auth/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfTokenFromForm(regForm)
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(res => {
+                    const msgBlock = document.getElementById('registerMessage');
+                    if (res.status === 'ok') {
+                        msgBlock.textContent = 'Регистрация прошла успешно, проверьте вашу почту.';
+                    } else {
+                        msgBlock.textContent = res.message || 'Ошибка регистрации';
+                    }
+                })
+                .catch(() => {
+                    const msgBlock = document.getElementById('registerMessage');
+                    msgBlock.textContent = 'Ошибка регистрации';
+                });
+            });
+        }
+
+        // Обработчик формы входа
+        const loginForm = document.getElementById('emailLoginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const data = {
+                    email: email,
+                    password: password
+                };
+                fetch('/auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfTokenFromForm(loginForm)
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(res => {
+                    const msgBlock = document.getElementById('loginMessage');
+                    if (res.status === 'ok') {
+                        msgBlock.textContent = 'Вход выполнен. ID пользователя: ' +
+                            (res.data && res.data.userId ? res.data.userId : '');
+                    } else {
+                        msgBlock.textContent = res.message || 'Ошибка входа';
+                    }
+                })
+                .catch(() => {
+                    const msgBlock = document.getElementById('loginMessage');
+                    msgBlock.textContent = 'Ошибка входа';
+                });
+            });
+        }
+    </script>
 </body>
 </html>
