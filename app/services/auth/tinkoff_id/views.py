@@ -99,7 +99,8 @@ class TinkoffCallback(View):
             return HttpResponse("Failed to get introspect token", status=403)
 
         granded_scope = set(introspect_response.get("scope", ""))
-        if not settings.TINKOFF_ID_SCOPE.issubset(granded_scope):
+        required_scope = set(settings.TINKOFF_ID_SCOPE)
+        if not required_scope.issubset(granded_scope):
             message = "Missing scope"
             logger.error(message)
             return HttpResponse(message, status=403)
@@ -129,5 +130,7 @@ class TinkoffCallback(View):
         else:
             logger.info(f"User account already exists for: [{email}]")
 
-        login(request, user)
+        login(
+            request, user, backend="django.contrib.auth.backends.ModelBackend"
+        )
         return redirect("/")

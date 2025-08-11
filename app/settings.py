@@ -181,4 +181,4 @@ TINKOFF_ID_AUTH_URL = "https://id.tinkoff.ru/auth/authorize"
 TINKOFF_ID_TOKEN_URL = "https://id.tinkoff.ru/auth/token"
 TINKOFF_ID_USERINFO_URL = "https://id.tinkoff.ru/userinfo/userinfo"
 TINKOFF_ID_INTROSPECT_URL = "https://id.tinkoff.ru/auth/introspect"
-TINKOFF_ID_SCOPE = {"profile", "email"}
+TINKOFF_ID_SCOPE = ["profile", "email"]
