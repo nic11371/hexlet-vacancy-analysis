@@ -29,7 +29,7 @@ DEBUG=True
 
 YANDEX_CLIENT_ID=key
 YANDEX_CLIENT_SECRET=key
-YANDEX_REDIRECT_URI=http://localhost:8000
+YANDEX_REDIRECT_URI=http://localhost:8000/auth/yandex/callback/
 ```
 
 Create a PostgreSQL user (or reuse an existing one) and a database using the parameters from DATABASE_URL.
