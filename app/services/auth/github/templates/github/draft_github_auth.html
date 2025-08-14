@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>GitHub OAuth (draft)</title>
+    </head>
+    <body>
+        <header>
+            <p>
+                Для авторизации через Гитхаб нужен <a href="https://localhost:8000/auth/github/">localhost</a> вместо 127.0.0.1
+            </p>
+
+            <p>В .env можно изменить DJANGO_EMAIL_BACKEND на django.core.mail.backends.console.EmailBackend</p>
+
+            {% if github_user %}
+                {% if github_user.first_name or github_user.last_name %}
+                    <p>Привет, {{ github_user.first_name }} {{ github_user.last_name }}!</p>
+                {% else %}
+                    <p>Привет, noname!</p>
+                {% endif %}
+                <p>Email: {{ github_user.email }}</p>
+                <br>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit">Выйти</button>
+                </form>
+            {% else %}
+                <a href="{% url 'github_auth' %}">Войти через GitHub</a>
+            {% endif %}
+            <br>
+            <br>
+            <a href="/admin" target="_blank">admin</a>
+        </header>
+    </body>
+</html>
