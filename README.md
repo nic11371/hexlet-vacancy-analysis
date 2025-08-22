@@ -1,7 +1,6 @@
 # hexlet-vacancy-analysis  
 
 
-
 ## Requirements:
 
 To run this project, you need to have the following software installed:
