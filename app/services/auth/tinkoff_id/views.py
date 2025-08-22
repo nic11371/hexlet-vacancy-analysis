@@ -19,6 +19,9 @@ class TinkoffLogin(View):
         state = secrets.token_urlsafe(32)
         request.session["state"] = state
 
+        previous_page = request.META.get("HTTP_REFERER")
+        request.session["previous_page"] = previous_page
+
         params = {
             "client_id": settings.TINKOFF_ID_CLIENT_ID,
             "redirect_uri": settings.TINKOFF_ID_REDIRECT_URI,
@@ -63,6 +66,7 @@ class TinkoffCallback(View):
         return response.json()
 
     def get(self, request):
+        previous_page = request.session.pop("previous_page", "/")
         state = request.GET.get("state")
         if state != request.session.pop("state"):
             message = "Invalid state parameter"
@@ -133,4 +137,4 @@ class TinkoffCallback(View):
         login(
             request, user, backend="django.contrib.auth.backends.ModelBackend"
         )
-        return redirect("/")
+        return redirect(previous_page)
