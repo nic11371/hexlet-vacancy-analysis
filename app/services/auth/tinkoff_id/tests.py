@@ -1,12 +1,12 @@
-from django.test import TestCase, RequestFactory
-from django.urls import reverse
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from unittest.mock import patch, MagicMock
-import base64
+from unittest.mock import MagicMock, patch
 
-from .views import TinkoffLogin, TinkoffCallback
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
+
+from .views import TinkoffCallback, TinkoffLogin
 
 User = get_user_model()
 
