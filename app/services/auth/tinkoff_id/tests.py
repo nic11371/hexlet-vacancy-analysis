@@ -119,7 +119,7 @@ class TinkoffCallbackTest(TestCase):
 
         response = TinkoffCallback.as_view()(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.props["status_code"], 403)
         self.assertIn("Invalid state parameter", str(response.content))
 
     @patch("app.services.auth.tinkoff_id.views.requests.post")
@@ -134,7 +134,7 @@ class TinkoffCallbackTest(TestCase):
 
         response = TinkoffCallback.as_view()(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.props["status_code"], 403)
         self.assertIn("Missing code parameter", str(response.content))
 
     @patch("app.services.auth.tinkoff_id.views.requests.post")
@@ -152,7 +152,7 @@ class TinkoffCallbackTest(TestCase):
 
         response = TinkoffCallback.as_view()(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.props["status_code"], 403)
         self.assertIn("Failed to get access token", str(response.content))
 
     @patch("app.services.auth.tinkoff_id.views.requests.post")
@@ -173,7 +173,7 @@ class TinkoffCallbackTest(TestCase):
 
         response = TinkoffCallback.as_view()(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.props["status_code"], 403)
         self.assertIn("Failed to get introspect token", str(response.content))
 
     @patch("app.services.auth.tinkoff_id.views.requests.post")
@@ -198,7 +198,7 @@ class TinkoffCallbackTest(TestCase):
 
         response = TinkoffCallback.as_view()(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.props["status_code"], 403)
         self.assertIn("Missing scope", str(response.content))
 
     @patch("app.services.auth.tinkoff_id.views.requests.post")
@@ -224,5 +224,5 @@ class TinkoffCallbackTest(TestCase):
 
         response = TinkoffCallback.as_view()(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.props["status_code"], 403)
         self.assertIn("User has no email", str(response.content))

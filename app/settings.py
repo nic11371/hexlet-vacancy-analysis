@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "inertia",
     "app.services.hh.hh_parser",
     "app.services.telegram.telegram_parser",
     "app.services.telegram.telegram_channels",
@@ -182,3 +183,6 @@ TINKOFF_ID_TOKEN_URL = "https://id.tinkoff.ru/auth/token"
 TINKOFF_ID_USERINFO_URL = "https://id.tinkoff.ru/userinfo/userinfo"
 TINKOFF_ID_INTROSPECT_URL = "https://id.tinkoff.ru/auth/introspect"
 TINKOFF_ID_SCOPE = ["profile", "email"]
+
+# inertia settings
+INERTIA_LAYOUT = "base.html"

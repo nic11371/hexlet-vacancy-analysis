@@ -6,9 +6,9 @@ from urllib.parse import urlencode
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
-from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views import View
+from inertia import render
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -34,6 +34,8 @@ class TinkoffLogin(View):
 
 
 class TinkoffCallback(View):
+    error_page = "ErrorPage"
+
     def _create_basic_auth_header(self):
         credentials = (
             base64.encodebytes(
@@ -67,17 +69,14 @@ class TinkoffCallback(View):
 
     def get(self, request):
         previous_page = request.session.pop("previous_page", "/")
+
         state = request.GET.get("state")
         if state != request.session.pop("state"):
-            message = "Invalid state parameter"
-            logger.error(message)
-            return HttpResponse(message, status=403)
+            return self._handle_error("Invalid state parameter", 403)
 
         code = request.GET.get("code")
         if not code:
-            message = "Missing code parameter"
-            logger.error(message)
-            return HttpResponse(message, status=403)
+            return self._handle_error("Missing code parameter", 403)
 
         token_data = {
             "grant_type": "authorization_code",
@@ -88,7 +87,7 @@ class TinkoffCallback(View):
             settings.TINKOFF_ID_TOKEN_URL, data=token_data
         )
         if not token_response:
-            return HttpResponse("Failed to get access token", status=403)
+            return self._handle_error("Failed to get access token", 403)
 
         acssess_token = token_response.get("access_token")
 
@@ -100,14 +99,12 @@ class TinkoffCallback(View):
             data=introspect_data,
         )
         if not introspect_response:
-            return HttpResponse("Failed to get introspect token", status=403)
+            return self._handle_error("Failed to get introspect token", 403)
 
         granded_scope = set(introspect_response.get("scope", ""))
         required_scope = set(settings.TINKOFF_ID_SCOPE)
         if not required_scope.issubset(granded_scope):
-            message = "Missing scope"
-            logger.error(message)
-            return HttpResponse(message, status=403)
+            return self._handle_error("Missing scope", 403)
 
         user_data = {
             "client_id": settings.TINKOFF_ID_CLIENT_ID,
@@ -120,13 +117,11 @@ class TinkoffCallback(View):
             token=acssess_token,
         )
         if not user_info:
-            return HttpResponse("Failed to get user info", status=403)
+            return self._handle_error("Failed to get user info", 403)
 
         email = user_info.get("email")
         if not email:
-            message = "User has no email"
-            logger.error(message)
-            return HttpResponse(message, status=403)
+            return self._handle_error("User has no email", 403)
 
         user, created = User.objects.get_or_create(email=email)
         if created:
@@ -138,3 +133,11 @@ class TinkoffCallback(View):
             request, user, backend="django.contrib.auth.backends.ModelBackend"
         )
         return redirect(previous_page)
+
+    def _handle_error(self, message, status_code):
+        logger.error(message)
+        return render(
+            self.request,
+            self.error_page,
+            props={"message": message, "status_code": status_code},
+        )
