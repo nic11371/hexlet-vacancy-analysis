@@ -20,7 +20,7 @@ class GithubURLTests(TestCase):
         self.assertEqual(resolve("/auth/github/").func, views.draft_login)
         self.assertEqual(resolve("/auth/github/start/").func, views.start_auth)
         self.assertEqual(resolve("/auth/github/callback/").func, views.auth_callback)
-        # новые адаптеры форм
+        # адаптеры форм
         self.assertEqual(
             resolve("/auth/github/email/register/").func.__name__, "email_register"
         )
@@ -40,7 +40,7 @@ class GithubURLTests(TestCase):
 
 class GithubViewsTests(TestCase):
     """
-    проверки draft-страницы, старта OAuth, callback-а.
+    проверки draft-страницы, старта OAuth, callback-а, email-форм и логики next.
     """
 
     def setUp(self):
@@ -52,9 +52,9 @@ class GithubViewsTests(TestCase):
         resp = self.client.get(reverse("github_login"))
         self.assertContains(resp, "Войти через GitHub")
 
-    # ----- start_auth -------------------------------------------------------
+    # ----- start_auth (обычный визит, 302) ---------------------------------
 
-    def test_start_auth_redirects(self):
+    def test_start_auth_redirects_and_sets_state(self):
         resp = self.client.get(reverse("github_auth"))
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(
@@ -63,6 +63,38 @@ class GithubViewsTests(TestCase):
         )
         # state должен появиться в сессии
         self.assertIn("oauth_state", self.client.session)
+        # и должна существовать карта oauth_flows, где есть ключ для этого state
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertIn(state, flows)
+        self.assertIn("next", flows[state])
+        self.assertIsNone(flows[state]["next"])
+
+    def test_start_auth_stores_valid_next_from_query(self):
+        resp = self.client.get(reverse("github_auth") + "?next=/some/path")
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertEqual(flows[state]["next"], "/some/path")
+
+    def test_start_auth_ignores_external_next(self):
+        resp = self.client.get(reverse("github_auth") + "?next=https://evil.com/steal")
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        # внешний next должен быть отфильтрован
+        self.assertIsNone(flows[state]["next"])
+
+    def test_start_auth_uses_referer_when_no_next(self):
+        resp = self.client.get(
+            reverse("github_auth"),
+            # реферер на свой относительный путь должен пройти валидацию
+            **{"HTTP_REFERER": "/from/page"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertEqual(flows[state]["next"], "/from/page")
 
     # ----- auth_callback: невалидный state ----------------------------------
 
@@ -94,7 +126,7 @@ class GithubViewsTests(TestCase):
     def test_full_oauth_flow(self, mock_post, mock_get):
         """
         проверяем happy-path: обмен code -> token, получение профиля,
-        сохранение пользователя, логин и редирект.
+        сохранение пользователя, логин и редирект (без next -> на github_login).
         """
         # мокаем запрос code  ->  token
         mock_post.return_value = SimpleNamespace(
@@ -135,7 +167,50 @@ class GithubViewsTests(TestCase):
         user = User.objects.get(email="octo@example.com")
         self.assertEqual((user.first_name, user.last_name), ("Octo", "Cat"))
 
-    # ----- регистрация -----------------------------------
+    # ----- auth_callback: возврат на next -----------------------------------
+
+    def test_auth_callback_redirects_to_next_and_cleans_flow(self):
+        """
+        стартуем с валидным next, затем колбэк редиректит туда же,
+        а запись в flows удаляется.
+        """
+        # старт с next
+        resp_start = self.client.get(reverse("github_auth") + "?next=/welcome")
+        self.assertEqual(resp_start.status_code, 302)
+        state = self.client.session["oauth_state"]
+        self.assertEqual(self.client.session["oauth_flows"][state]["next"], "/welcome")
+
+        # готовим пользователя и удачную authenticate
+        user = User.objects.create_user(email="u@example.com", password="Password2025")
+        user.backend = "django.contrib.auth.backends.ModelBackend"
+        with patch("app.services.auth.github.views.authenticate", return_value=user):
+            resp_cb = self.client.get(
+                reverse("github_callback") + f"?state={state}&code=ok"
+            )
+
+        self.assertRedirects(resp_cb, "/welcome", fetch_redirect_response=False)
+
+        # запись по state должна быть удалена (одноразовость)
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertNotIn(state, flows)
+
+    def test_auth_callback_with_bad_next_falls_back(self):
+        """
+        стартуем с внешним next -> он игнорируется, после колбэка редирект на дефолт.
+        """
+        # внешний next отфильтруется уже на старте
+        _ = self.client.get(reverse("github_auth") + "?next=https://evil.com/path")
+        state = self.client.session["oauth_state"]
+
+        user = User.objects.create_user(email="x@example.com", password="Password2025")
+        user.backend = "django.contrib.auth.backends.ModelBackend"
+        with patch("app.services.auth.github.views.authenticate", return_value=user):
+            resp_cb = self.client.get(
+                reverse("github_callback") + f"?state={state}&code=ok"
+            )
+        self.assertRedirects(resp_cb, reverse("github_login"))
+
+    # ----- регистрация ------------------------------------------------------
 
     def test_email_register_get_not_allowed(self):
         resp = self.client.get(reverse("github_email_register"))
@@ -169,7 +244,7 @@ class GithubViewsTests(TestCase):
         )
         self.assertRedirects(resp, reverse("github_login"))
 
-    # ----- вход ------------------------------------------
+    # ----- вход по email ----------------------------------------------------
 
     def test_email_login_get_not_allowed(self):
         resp = self.client.get(reverse("github_email_login"))
@@ -194,6 +269,21 @@ class GithubViewsTests(TestCase):
         resp = self.client.post(
             reverse("github_email_login"),
             data={"email": "user@example.com", "password": "wrong"},
+        )
+        self.assertRedirects(resp, reverse("github_login"))
+        self.assertIsNone(self.client.session.get("_auth_user_id"))
+
+    def test_email_login_inactive_user(self):
+        # неактивный пользователь не должен логиниться
+        user = User.objects.create_user(
+            email="inactive@example.com", password="Password2025"
+        )
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+
+        resp = self.client.post(
+            reverse("github_email_login"),
+            data={"email": "inactive@example.com", "password": "Password2025"},
         )
         self.assertRedirects(resp, reverse("github_login"))
         self.assertIsNone(self.client.session.get("_auth_user_id"))
