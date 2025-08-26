@@ -7,7 +7,10 @@ from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+from inertia import location
 
 from app.services.auth.users import exceptions as custom_ex
 from app.services.auth.users.logic.registration import register_user
@@ -35,10 +38,29 @@ def start_auth(request):
     """
     Генерирует state, сохраняет его в сессии и
     перенаправляет пользователя на страницу авторизации Яндекс.
+    + Запоминаем, откуда стартовали (next), и поддерживаем Inertia-визит.
     """
     state = secrets.token_urlsafe(16)
     request.session["oauth_state"] = state
 
+    # откуда вернуться
+    candidate_next = request.GET.get("next") or request.META.get("HTTP_REFERER")
+    is_valid_next = bool(
+        candidate_next
+        and url_has_allowed_host_and_scheme(
+            url=candidate_next,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        )
+    )
+    next_url = candidate_next if is_valid_next else None
+
+    # привязка next к state для нескольких вкладок
+    flows = request.session.get("oauth_flows", {})
+    flows[state] = {"next": next_url}
+    request.session["oauth_flows"] = flows
+
+    # адрес авторизации
     params = {
         "response_type": "code",
         "client_id": settings.YANDEX_CLIENT_ID,
@@ -47,6 +69,10 @@ def start_auth(request):
         "scope": "login:email login:info",
     }
     url = "https://oauth.yandex.ru/authorize?" + urlencode(params)
+
+    # если вход со страницы с Inertia - 409 + X-Inertia-Location
+    if request.headers.get("X-Inertia"):
+        return location(url)
     return redirect(url)
 
 
@@ -54,25 +80,46 @@ def auth_callback(request):
     """
     обрабатывает callback от Яндекса:
     валидирует state, вызывает YandexBackend через authenticate и логинит.
+    + Возвращаемся на сохранённый next (если валиден).
     """
-    # проверка state и получение кода
+    # проверка state
     returned_state = request.GET.get("state")
     saved_state = request.session.pop("oauth_state", None)
     if not returned_state or returned_state != saved_state:
         return HttpResponse("Invalid OAuth state", status=400)
 
+    # чтение code
     code = request.GET.get("code")
     if not code:
         return HttpResponse("Ошибка: не передан code", status=400)
 
-    # аутентификация через кастомный бэкенд
+    # ауф через свой backend
     user = authenticate(request, code=code)
     if user is None:
         return HttpResponse("Authentication failed", status=400)
 
-    # логин и редирект обратно
+    # непосредственно логин
     login(request, user)
-    return redirect("yandex_login")
+
+    # достаем сохранённый next именно для этого state
+    flows = request.session.get("oauth_flows", {})
+    flow = flows.pop(returned_state, {})  # удаляем, чтобы одноразово
+    request.session["oauth_flows"] = flows
+    next_url = flow.get("next")
+
+    # редирект
+    if not (
+        next_url
+        and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        )
+    ):
+        next_url = reverse("yandex_login")
+
+    return redirect(next_url)
+
 
 
 @require_POST
