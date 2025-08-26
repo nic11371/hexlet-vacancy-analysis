@@ -29,7 +29,7 @@ class YandexIDURLTests(TestCase):
 
 class YandexIDViewsTests(TestCase):
     """
-    проверки draft-страницы, старта OAuth и callback-а.
+    проверки draft-страницы, старта OAuth и callback-а и логики next.
     """
 
     def setUp(self):
@@ -41,15 +41,50 @@ class YandexIDViewsTests(TestCase):
         resp = self.client.get(reverse("yandex_login"))
         self.assertContains(resp, "Войти через Yandex ID")
 
-    # ----- start_auth -------------------------------------------------------
+    # ----- start_auth (обычный визит, 302) ---------------------------------
 
-    def test_start_auth_redirects(self):
+    def test_start_auth_redirects_and_sets_state(self):
         resp = self.client.get(reverse("yandex_auth"))
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(
             resp["Location"].startswith("https://oauth.yandex.ru/authorize"),
             resp["Location"],
         )
+        # state должен появиться в сессии
+        self.assertIn("oauth_state", self.client.session)
+        # и карта flows с привязкой next к state
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertIn(state, flows)
+        self.assertIn("next", flows[state])
+        self.assertIsNone(flows[state]["next"])
+
+    def test_start_auth_stores_valid_next_from_query(self):
+        resp = self.client.get(reverse("yandex_auth") + "?next=/some/path")
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertEqual(flows[state]["next"], "/some/path")
+
+    def test_start_auth_ignores_external_next(self):
+        resp = self.client.get(
+            reverse("yandex_auth") + "?next=https://evil.com/hack"
+        )
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        # внешний next должен быть отфильтрован
+        self.assertIsNone(flows[state]["next"])
+
+    def test_start_auth_uses_referer_when_no_next(self):
+        resp = self.client.get(
+            reverse("yandex_auth"),
+            **{"HTTP_REFERER": "/from/page"}
+        )
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertEqual(flows[state]["next"], "/from/page")
 
     # ----- auth_callback: невалидный state ----------------------------------
 
@@ -112,11 +147,52 @@ class YandexIDViewsTests(TestCase):
         self.assertRedirects(resp_cb, reverse("yandex_login"))
 
         # убеждаемся, что пользователь создан и данные записаны
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
         user = User.objects.get(email="test@yandex.com")
         self.assertEqual((user.first_name, user.last_name), ("Ivan", "Ivanov"))
+
+    # ----- auth_callback: возврат на next -----------------------------------
+
+    def test_auth_callback_redirects_to_next_and_cleans_flow(self):
+        """
+        стартуем с валидным next, затем колбэк редиректит туда же, а запись в flows удаляется.
+        """
+        # старт с next
+        resp_start = self.client.get(reverse("yandex_auth") + "?next=/welcome")
+        self.assertEqual(resp_start.status_code, 302)
+        state = self.client.session["oauth_state"]
+        self.assertEqual(self.client.session["oauth_flows"][state]["next"], "/welcome")
+
+        # готовим пользователя и удачную authenticate
+        user = User.objects.create_user(email="u@example.com", password="Password2025")
+        user.backend = "django.contrib.auth.backends.ModelBackend"  # важно для login()
+        with patch("app.services.auth.yandex_id.views.authenticate", return_value=user):
+            resp_cb = self.client.get(
+                reverse("yandex_callback") + f"?state={state}&code=ok"
+            )
+
+        # конечной страницы/welcome может не быть -> не ходим за ней
+        self.assertRedirects(resp_cb, "/welcome", fetch_redirect_response=False)
+
+        # запись по state должна быть удалена (одноразовость)
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertNotIn(state, flows)
+
+    def test_auth_callback_with_bad_next_falls_back(self):
+        """
+        стартуем с внешним next -> он игнорируется, после колбэка редирект на дефолт.
+        """
+        _ = self.client.get(
+            reverse("yandex_auth") + "?next=https://evil.com/path"
+        )
+        state = self.client.session["oauth_state"]
+
+        user = User.objects.create_user(email="x@example.com", password="Password2025")
+        user.backend = "django.contrib.auth.backends.ModelBackend"
+        with patch("app.services.auth.yandex_id.views.authenticate", return_value=user):
+            resp_cb = self.client.get(
+                reverse("yandex_callback") + f"?state={state}&code=ok"
+            )
+        self.assertRedirects(resp_cb, reverse("yandex_login"))
 
 
 class YandexIDEmailFormURLTests(TestCase):
