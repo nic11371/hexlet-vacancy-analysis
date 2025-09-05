@@ -72,7 +72,7 @@ def start_auth(request):
 
     # если вход со страницы с Inertia - 409 + X-Inertia-Location
     if request.headers.get("X-Inertia"):
-        return redirect(url)
+        return location(url)
 
     return redirect(url)
 
