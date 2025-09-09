@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'inertia.middleware.InertiaMiddleware',
+    'app.middleware.InertiaMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
