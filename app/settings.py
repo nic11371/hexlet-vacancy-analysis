@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_vite',
     'app.services.hh.hh_parser',
     'app.services.telegram.telegram_parser',
     'app.services.telegram.telegram_channels',
@@ -168,3 +169,17 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() in ("true", "1", "yes
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 10))
+
+## django-vite settings
+# use HMR or not.
+DJANGO_VITE_DEV_MODE = DEBUG
+
+# Where ViteJS production assets are built.
+DJANGO_VITE_ASSETS_PATH = BASE_DIR / "app" / "frontend" / "static" / "dist"
+
+# Include DJANGO_VITE_ASSETS_PATH into STATICFILES_DIRS to be copied inside
+# when run command python manage.py collectstatic
+STATICFILES_DIRS = [DJANGO_VITE_ASSETS_PATH]
+
+# Vite 3 defaults to 5173. Default for django-vite is 3000, which is the default for Vite 2.
+DJANGO_VITE_DEV_SERVER_PORT = 5173
