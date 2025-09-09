@@ -151,6 +151,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -188,6 +189,9 @@ STATICFILES_DIRS = [DJANGO_VITE_ASSETS_PATH]
 # Vite 3 defaults to 5173. Default for django-vite is 3000, which is the default for Vite 2.
 DJANGO_VITE_DEV_SERVER_PORT = 5173
 
+DJANGO_VITE_MANIFEST_PATH = os.path.join(STATIC_ROOT, "manifest.json")
+
 ## Inertia settings
+INERTIA_LAYOUT = BASE_DIR / "app" / "templates" / "index.html"
 CSRF_HEADER_NAME = 'HTTP_X_XSRF_TOKEN'
 CSRF_COOKIE_NAME = 'XSRF-TOKEN'
