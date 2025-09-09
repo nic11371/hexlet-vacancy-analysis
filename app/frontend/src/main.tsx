@@ -1,14 +1,27 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { MantineProvider } from '@mantine/core';
-import '@mantine/core/styles.css';
+import "vite/modulepreload-polyfill";
+import { createRoot } from "react-dom/client";
+import { createInertiaApp } from "@inertiajs/react";
+import { InertiaProgress } from '@inertiajs/progress';
+import axios from 'axios';
+import { Page } from "@inertiajs/core";
+import React from 'react';
+document.addEventListener('DOMContentLoaded', () => {
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <MantineProvider> 
-      <App />
-    </MantineProvider>
-  </React.StrictMode>,
-)
+    const csrfToken = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+    axios.defaults.headers.common['X-CSRF-Token'] = csrfToken;
+
+    InertiaProgress.init();
+
+    createInertiaApp({
+        resolve: (name) => import(`./components/pages/${name}.tsx`),
+        setup({ el, App, props }: {
+            el: HTMLElement,
+            App: React.ComponentType<{ page: Page }>,
+            props: any
+        }) {
+            const root = createRoot(el);
+            root.render(<App {...props} />);
+        },
+    });
+
+});
