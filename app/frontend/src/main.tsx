@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { createInertiaApp } from "@inertiajs/react";
 import { InertiaProgress } from '@inertiajs/progress';
 import axios from 'axios';
-import { Page } from "@inertiajs/core";
 import React from 'react';
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -16,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resolve: (name) => import(`./components/pages/${name}.tsx`),
         setup({ el, App, props }: {
             el: HTMLElement,
-            App: React.ComponentType<{ page: Page }>,
+            App: React.ComponentType<{ page: any }>,
             props: any
         }) {
             const root = createRoot(el);
