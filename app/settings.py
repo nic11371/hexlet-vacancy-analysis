@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_vite',
+    'inertia',
     'app.services.hh.hh_parser',
     'app.services.telegram.telegram_parser',
     'app.services.telegram.telegram_channels',
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'inertia.middleware.InertiaMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -183,3 +185,7 @@ STATICFILES_DIRS = [DJANGO_VITE_ASSETS_PATH]
 
 # Vite 3 defaults to 5173. Default for django-vite is 3000, which is the default for Vite 2.
 DJANGO_VITE_DEV_SERVER_PORT = 5173
+
+## Inertia settings
+CSRF_HEADER_NAME = 'HTTP_X_XSRF_TOKEN'
+CSRF_COOKIE_NAME = 'XSRF-TOKEN'
