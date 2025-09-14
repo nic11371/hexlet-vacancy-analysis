@@ -37,7 +37,11 @@ class ProfileEditView(View):
         return render(
             request,
             "account/draft_account_edit.html",
-            {"component": "ProfileEdit", "props": props, "saved": request.GET.get("saved") == "1"},
+            {
+                "component": "ProfileEdit",
+                "props": props,
+                "saved": request.GET.get("saved") == "1",
+            },
         )
 
     def post(self, request):
@@ -62,7 +66,9 @@ class ProfileEditView(View):
             props = self._build_props(user)
             props.update({"first_name": first_name, "last_name": last_name})
 
-            wants_json = request.GET.get("format") == "json" or "application/json" in request.headers.get("Accept", "")
+            wants_json = request.GET.get(
+                "format"
+            ) == "json" or "application/json" in request.headers.get("Accept", "")
             if wants_json:
                 return JsonResponse(
                     {
@@ -90,7 +96,9 @@ class ProfileEditView(View):
         user.save(update_fields=["first_name", "last_name"])
 
         props = self._build_props(user)
-        wants_json = request.GET.get("format") == "json" or "application/json" in request.headers.get("Accept", "")
+        wants_json = request.GET.get(
+            "format"
+        ) == "json" or "application/json" in request.headers.get("Accept", "")
 
         if wants_json:
             return JsonResponse(
