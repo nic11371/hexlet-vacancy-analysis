@@ -1,5 +1,6 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views import View
 
 
@@ -83,11 +84,7 @@ class ProfileEditView(View):
             return render(
                 request,
                 "account/draft_account_edit.html",
-                {
-                    "component": "ProfileEdit",
-                    "props": props,
-                    "errors": errors,
-                },
+                {"component": "ProfileEdit", "props": props, "errors": errors},
                 status=400,
             )
 
@@ -95,12 +92,11 @@ class ProfileEditView(View):
         user.last_name = last_name
         user.save(update_fields=["first_name", "last_name"])
 
-        props = self._build_props(user)
         wants_json = request.GET.get(
             "format"
         ) == "json" or "application/json" in request.headers.get("Accept", "")
-
         if wants_json:
+            props = self._build_props(user)
             return JsonResponse(
                 {
                     "status": "ok",
@@ -110,8 +106,7 @@ class ProfileEditView(View):
                 }
             )
 
-        return render(
-            request,
-            "account/draft_account_edit.html",
-            {"component": "ProfileEdit", "props": props, "saved": True},
-        )
+        url = f"{reverse('account_profile_edit')}?saved=1"
+        resp = redirect(url)
+        resp.status_code = 303
+        return resp
