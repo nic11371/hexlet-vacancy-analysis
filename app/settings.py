@@ -47,8 +47,6 @@ INSTALLED_APPS = [
     'app.services.telegram.telegram_channels',
     'app.services.superjob.superjob_parser',
     'app.services.account',
-    'app.services.auth.github',
-    'app.services.auth.yandex_id',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -160,8 +158,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
     'app.services.auth.users.logic.authentication.EmailAuthBackend',
-    'app.services.auth.yandex_id.backend.YandexBackend',
-    'app.services.auth.github.backend.GithubBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
