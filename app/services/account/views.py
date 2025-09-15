@@ -17,18 +17,21 @@ class ProfileEditView(View):
         }
 
     def get(self, request):
+        wants_json = (
+            request.GET.get("format") == "json"
+            or "application/json" in request.headers.get("Accept", "")
+        )
+
         if not request.user.is_authenticated:
-            return JsonResponse(
-                {"status": "error", "message": "Authentication required"},
-                status=401,
-            )
+            if wants_json:
+                return JsonResponse(
+                    {"status": "error", "message": "Authentication required"},
+                    status=401,
+                )
+            return render(request, "account/draft_account_edit.html")
 
         user = request.user
         props = self._build_props(user)
-
-        wants_json = request.GET.get(
-            "format"
-        ) == "json" or "application/json" in request.headers.get("Accept", "")
 
         if wants_json:
             return JsonResponse(
