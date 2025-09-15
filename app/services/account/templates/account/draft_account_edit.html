@@ -58,6 +58,11 @@
                             <button type="submit">Сохранить</button>
                         </div>
                     </form>
+                    <br>
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">Выйти</button>
+                    </form>
                 </section>
             {% endif %}
         </main>

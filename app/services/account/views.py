@@ -95,12 +95,13 @@ class ProfileEditView(View):
             ) == "json" or "application/json" in request.headers.get("Accept", "")
             wants_inertia = bool(request.headers.get("X-Inertia"))
             if wants_inertia:
-                return inertia_render(
+                resp = inertia_render(
                     request,
                     "ProfileEdit",
                     {**props, "errors": errors},
-                    status=422,
                 )
+                resp.status_code = 422
+                return resp
 
             if wants_json:
                 return JsonResponse(
