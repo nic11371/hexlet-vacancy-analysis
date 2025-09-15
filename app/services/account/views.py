@@ -1,6 +1,8 @@
+from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
 
@@ -17,9 +19,23 @@ class ProfileEditView(View):
         }
 
     def get(self, request):
-        wants_json = (
-            request.GET.get("format") == "json"
-            or "application/json" in request.headers.get("Accept", "")
+        wants_json = request.GET.get(
+            "format"
+        ) == "json" or "application/json" in request.headers.get("Accept", "")
+
+        # исходная ссылка для возврата после сохранения
+        candidate_next = request.GET.get("next") or request.META.get("HTTP_REFERER")
+        next_url = (
+            candidate_next
+            if (
+                candidate_next
+                and url_has_allowed_host_and_scheme(
+                    url=candidate_next,
+                    allowed_hosts={request.get_host()},
+                    require_https=request.is_secure(),
+                )
+            )
+            else None
         )
 
         if not request.user.is_authenticated:
@@ -28,7 +44,7 @@ class ProfileEditView(View):
                     {"status": "error", "message": "Authentication required"},
                     status=401,
                 )
-            return render(request, "account/draft_account_edit.html")
+            return render(request, "account/draft_account_edit.html", {"next": next_url})
 
         user = request.user
         props = self._build_props(user)
@@ -44,7 +60,7 @@ class ProfileEditView(View):
             {
                 "component": "ProfileEdit",
                 "props": props,
-                "saved": request.GET.get("saved") == "1",
+                "next": next_url,
             },
         )
 
@@ -109,7 +125,19 @@ class ProfileEditView(View):
                 }
             )
 
-        url = f"{reverse('account_profile_edit')}?saved=1"
+        messages.success(request, "Изменения сохранены")
+
+        # возврат после сохранения
+        candidate_next = request.POST.get("next") or request.META.get("HTTP_REFERER")
+        if candidate_next and url_has_allowed_host_and_scheme(
+            url=candidate_next,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            url = candidate_next
+        else:
+            url = reverse("account_profile_edit")
+
         resp = redirect(url)
         resp.status_code = 303
         return resp

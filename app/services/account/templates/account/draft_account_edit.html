@@ -7,9 +7,11 @@
     </head>
     <body>
         <main>
+            {% if messages %}
+                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+            {% endif %}
             {% if not request.user.is_authenticated %}
                 <h1>Вход в аккаунт</h1>
-                <p>Чтобы редактировать профиль, войдите через один из сервисов, но сначала перейди на <a href="http://localhost:8000/account/profile/">localhost</a></p>
                 <ul>
                     <li>
                         <a href="{% url 'yandex_auth' %}?next={{ request.path|urlencode }}">Войти через Yandex</a>
@@ -33,6 +35,7 @@
                     <h2>Имя и фамилия</h2>
                     <form method="post">
                         {% csrf_token %}
+                        {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
                         <div>
                             <label for="first_name">Имя</label>
                             <input id="first_name"
