@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
+from inertia import render as inertia_render
 
 
 class ProfileEditView(View):
@@ -22,6 +23,7 @@ class ProfileEditView(View):
         wants_json = request.GET.get(
             "format"
         ) == "json" or "application/json" in request.headers.get("Accept", "")
+        wants_inertia = bool(request.headers.get("X-Inertia"))
 
         # исходная ссылка для возврата после сохранения
         candidate_next = request.GET.get("next") or request.META.get("HTTP_REFERER")
@@ -39,7 +41,7 @@ class ProfileEditView(View):
         )
 
         if not request.user.is_authenticated:
-            if wants_json:
+            if wants_json or wants_inertia:
                 return JsonResponse(
                     {"status": "error", "message": "Authentication required"},
                     status=401,
@@ -48,6 +50,9 @@ class ProfileEditView(View):
 
         user = request.user
         props = self._build_props(user)
+
+        if wants_inertia:
+            return inertia_render(request, "ProfileEdit", props)
 
         if wants_json:
             return JsonResponse(
@@ -85,10 +90,18 @@ class ProfileEditView(View):
         if errors:
             props = self._build_props(user)
             props.update({"first_name": first_name, "last_name": last_name})
-
             wants_json = request.GET.get(
                 "format"
             ) == "json" or "application/json" in request.headers.get("Accept", "")
+            wants_inertia = bool(request.headers.get("X-Inertia"))
+            if wants_inertia:
+                return inertia_render(
+                    request,
+                    "ProfileEdit",
+                    {**props, "errors": errors},
+                    status=422,
+                )
+
             if wants_json:
                 return JsonResponse(
                     {
