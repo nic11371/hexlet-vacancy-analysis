@@ -12,14 +12,14 @@
             {% endif %}
             {% if not request.user.is_authenticated %}
                 <h1>Вход в аккаунт</h1>
-                <ul>
+                {% comment %} <ul>
                     <li>
                         <a href="{% url 'yandex_auth' %}?next={{ request.path|urlencode }}">Войти через Yandex</a>
                     </li>
                     <li>
                         <a href="{% url 'github_auth' %}?next={{ request.path|urlencode }}">Войти через GitHub</a>
                     </li>
-                </ul>
+                </ul> {% endcomment %}
             {% else %}
                 <h1>Редактирование профиля</h1>
                 {% if saved %}<p style="color: green;">Изменения сохранены</p>{% endif %}
@@ -59,10 +59,10 @@
                         </div>
                     </form>
                     <br>
-                    <form action="{% url 'logout' %}" method="post">
+                    {% comment %} <form action="{% url 'logout' %}" method="post">
                         {% csrf_token %}
                         <button type="submit">Выйти</button>
-                    </form>
+                    </form> {% endcomment %}
                 </section>
             {% endif %}
         </main>
