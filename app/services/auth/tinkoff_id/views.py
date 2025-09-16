@@ -15,13 +15,38 @@ User = get_user_model()
 
 
 class TinkoffLogin(View):
+    """
+    Класс обработки запроса авторизации через Tinkoff ID.
+
+    Реализует начальный этап OAuth-процесса: генерирует уникальный
+    идентификатор состояния (state), сохраняет контекст предыдущей
+    страницы и формирует URL для перенаправления пользователя на страницу
+    авторизации Tinkoff.
+    """
+
     def get(self, request):
+        """
+        Обрабатывает GET-запрос для инициации авторизации.
+
+        Генерирует безопасный случайный токен `state`, сохраняет его в сессии,
+        записывает адрес предыдущей страницы из заголовка HTTP_REFERER и формирует
+        URL для авторизации с необходимыми параметрами.
+
+        Args:
+            request (HttpRequest): Объект HTTP-запроса от Django.
+
+        Returns:
+            HttpResponseRedirect: Перенаправление на URL авторизации Tinkoff.
+        """
+        # Генерация уникального токена состояния для предотвращения CSRF-атак
         state = secrets.token_urlsafe(32)
         request.session["state"] = state
 
+        # Сохранение адреса, с которого был выполнен переход
         previous_page = request.META.get("HTTP_REFERER")
         request.session["previous_page"] = previous_page
 
+        # Формирование параметров запроса авторизации
         params = {
             "client_id": settings.TINKOFF_ID_CLIENT_ID,
             "redirect_uri": settings.TINKOFF_ID_REDIRECT_URI,
@@ -29,14 +54,36 @@ class TinkoffLogin(View):
             "response_type": "code",
             "scope": ",".join(settings.TINKOFF_ID_SCOPE),
         }
+
+        # Формирование финального URL для перенаправления пользователя
         auth_url = f"{settings.TINKOFF_ID_AUTH_URL}?{urlencode(params)}"
         return redirect(auth_url)
 
 
 class TinkoffCallback(View):
-    error_page = "ErrorPage"
+    """
+    Класс обработки обратного вызова (callback) OAuth-процесса
+    авторизации через Tinkoff ID.
+
+    Выполняет следующие задачи:
+    - Проверку безопасности запроса (валидация `state`).
+    - Получение access-токена по авторизационному коду.
+    - Проверку области действия токена.
+    - Получение информации о пользователе.
+    - Авторизацию или регистрацию пользователя в системе.
+    """
+
+    error_page = "ErrorPage"  # Шаблон страницы ошибки
 
     def _create_basic_auth_header(self):
+        """
+        Генерирует заголовок Basic Authentication для OAuth-запросов.
+
+        Формирует строку вида "Basic <base64_кодированные_учетные_данные>".
+
+        Returns:
+            str: Строка заголовка Basic Authentication.
+        """
         credentials = (
             base64.encodebytes(
                 (
@@ -53,6 +100,18 @@ class TinkoffCallback(View):
         return f"Basic {credentials}"
 
     def _make_oauth_request(self, url, data, auth_type="Basic", token=None):
+        """
+        Выполняет HTTP POST-запрос к OAuth-эндпоинту.
+
+        Args:
+            url (str): Адрес API для отправки запроса.
+            data (dict): Данные запроса (формат x-www-form-urlencoded).
+            auth_type (str): Тип авторизации ("Basic" или "Bearer").
+            token (str, optional): Токен для Bearer-авторизации.
+
+        Returns:
+            dict or None: JSON-ответ сервера или None при ошибке.
+        """
         headers = {
             "content_type": "application/x-www-form-urlencoded",
             "Authorization": (
@@ -68,6 +127,23 @@ class TinkoffCallback(View):
         return response.json()
 
     def get(self, request):
+        """
+        Обрабатывает GET-запрос после возврата пользователя с Tinkoff ID.
+
+        Выполняет полный цикл OAuth-авторизации:
+        1. Проверяет корректность `state`.
+        2. Получает access-токен.
+        3. Проверяет область действия токена.
+        4. Получает информацию о пользователе.
+        5. Авторизует или регистрирует пользователя.
+
+        Args:
+            request (HttpRequest): Объект HTTP-запроса от Django.
+
+        Returns:
+            HttpResponseRedirect: Перенаправление на предыдущую страницу
+                                  или страницу ошибки.
+        """
         previous_page = request.session.pop("previous_page", "/")
 
         state = request.GET.get("state")
@@ -89,10 +165,10 @@ class TinkoffCallback(View):
         if not token_response:
             return self._handle_error("Failed to get access token", 403)
 
-        acssess_token = token_response.get("access_token")
+        access_token = token_response.get("access_token")
 
         introspect_data = {
-            "token": acssess_token,
+            "token": access_token,
         }
         introspect_response = self._make_oauth_request(
             settings.TINKOFF_ID_INTROSPECT_URL,
@@ -101,9 +177,9 @@ class TinkoffCallback(View):
         if not introspect_response:
             return self._handle_error("Failed to get introspect token", 403)
 
-        granded_scope = set(introspect_response.get("scope", ""))
+        granted_scope = set(introspect_response.get("scope", ""))
         required_scope = set(settings.TINKOFF_ID_SCOPE)
-        if not required_scope.issubset(granded_scope):
+        if not required_scope.issubset(granted_scope):
             return self._handle_error("Missing scope", 403)
 
         user_data = {
@@ -114,7 +190,7 @@ class TinkoffCallback(View):
             settings.TINKOFF_ID_USERINFO_URL,
             data=user_data,
             auth_type="Bearer",
-            token=acssess_token,
+            token=access_token,
         )
         if not user_info:
             return self._handle_error("Failed to get user info", 403)
@@ -135,6 +211,18 @@ class TinkoffCallback(View):
         return redirect(previous_page)
 
     def _handle_error(self, message, status_code):
+        """
+        Обрабатывает ошибки OAuth-процесса.
+
+        Логгирует ошибку и возвращает шаблон страницы ошибки.
+
+        Args:
+            message (str): Сообщение об ошибке.
+            status_code (int): Код HTTP-ошибки.
+
+        Returns:
+            HttpResponse: Ответ с шаблоном страницы ошибки.
+        """
         logger.error(message)
         return render(
             self.request,
