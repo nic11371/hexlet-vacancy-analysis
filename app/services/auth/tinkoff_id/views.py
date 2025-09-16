@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.shortcuts import redirect
 from django.views import View
-from inertia import render
+from inertia import render as inertia_render
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -224,7 +224,7 @@ class TinkoffCallback(View):
             HttpResponse: Ответ с шаблоном страницы ошибки.
         """
         logger.error(message)
-        return render(
+        return inertia_render(
             self.request,
             self.error_page,
             props={"message": message, "status_code": status_code},
