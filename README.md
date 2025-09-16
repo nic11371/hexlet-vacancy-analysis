@@ -1,6 +1,5 @@
-# hexlet-vacancy-analysis
-
-
+# hexlet-vacancy-analysis   
+.
 
 ## Requirements:
 
@@ -52,3 +51,4 @@ make create-superuser
 ```bash
 make run
 ```
+.
