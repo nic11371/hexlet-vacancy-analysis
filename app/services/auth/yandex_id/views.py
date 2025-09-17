@@ -121,7 +121,6 @@ def auth_callback(request):
     return redirect(next_url)
 
 
-
 @require_POST
 def email_register(request):
     """

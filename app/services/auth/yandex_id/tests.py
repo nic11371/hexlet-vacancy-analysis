@@ -67,9 +67,7 @@ class YandexIDViewsTests(TestCase):
         self.assertEqual(flows[state]["next"], "/some/path")
 
     def test_start_auth_ignores_external_next(self):
-        resp = self.client.get(
-            reverse("yandex_auth") + "?next=https://evil.com/hack"
-        )
+        resp = self.client.get(reverse("yandex_auth") + "?next=https://evil.com/hack")
         self.assertEqual(resp.status_code, 302)
         state = self.client.session["oauth_state"]
         flows = self.client.session.get("oauth_flows", {})
@@ -77,10 +75,7 @@ class YandexIDViewsTests(TestCase):
         self.assertIsNone(flows[state]["next"])
 
     def test_start_auth_uses_referer_when_no_next(self):
-        resp = self.client.get(
-            reverse("yandex_auth"),
-            **{"HTTP_REFERER": "/from/page"}
-        )
+        resp = self.client.get(reverse("yandex_auth"), **{"HTTP_REFERER": "/from/page"})
         self.assertEqual(resp.status_code, 302)
         state = self.client.session["oauth_state"]
         flows = self.client.session.get("oauth_flows", {})
@@ -154,7 +149,8 @@ class YandexIDViewsTests(TestCase):
 
     def test_auth_callback_redirects_to_next_and_cleans_flow(self):
         """
-        стартуем с валидным next, затем колбэк редиректит туда же, а запись в flows удаляется.
+        стартуем с валидным next, затем колбэк редиректит туда же,
+        а запись в flows удаляется.
         """
         # старт с next
         resp_start = self.client.get(reverse("yandex_auth") + "?next=/welcome")
@@ -181,9 +177,7 @@ class YandexIDViewsTests(TestCase):
         """
         стартуем с внешним next -> он игнорируется, после колбэка редирект на дефолт.
         """
-        _ = self.client.get(
-            reverse("yandex_auth") + "?next=https://evil.com/path"
-        )
+        _ = self.client.get(reverse("yandex_auth") + "?next=https://evil.com/path")
         state = self.client.session["oauth_state"]
 
         user = User.objects.create_user(email="x@example.com", password="Password2025")
