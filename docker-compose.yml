@@ -6,7 +6,7 @@ services:
     environment:
       DATABASE_NAME: postgres
       DATABASE_USERNAME: postgres
-      POSTGRES_PASSWORD: postgres
+      DATABASE_PASSWORD: postgres
     ports:
       - "5432:5432"
 
@@ -24,7 +24,7 @@ services:
       DATABASE_HOST: db
       DATABASE_NAME: postgres
       DATABASE_USERNAME: postgres
-      POSTGRES_PASSWORD: postgres
+      DATABASE_PASSWORD: postgres
 
   frontend:
     build: ./app/frontend
