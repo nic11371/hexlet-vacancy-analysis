@@ -40,3 +40,15 @@ shell:
 
 test:
 	uv run manage.py test
+
+docker-up:
+	docker compose up -d
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f
+
+docker-build:
+	docker compose build
