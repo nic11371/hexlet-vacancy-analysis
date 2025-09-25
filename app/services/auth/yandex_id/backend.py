@@ -57,20 +57,17 @@ class YandexBackend(BaseBackend):
         }
         user, created = User.objects.get_or_create(email=email, defaults=defaults)
 
-        # при повторной авторизации обновляем имя и фамилию,
-        # если они отличаются от данных из Яндекса
-        first_name = defaults["first_name"]
-        last_name = defaults["last_name"]
-        updated = False
-        if not created:
-            if first_name and user.first_name != first_name:
-                user.first_name = first_name
-                updated = True
-            if last_name and user.last_name != last_name:
-                user.last_name = last_name
-                updated = True
-            if updated:
-                user.save(update_fields=["first_name", "last_name"])
+        # обновление имени и фамилии
+        if request is not None:
+            try:
+                suggest = {
+                    "first_name": defaults["first_name"],
+                    "last_name": defaults["last_name"],
+                }
+            except Exception:
+                suggest = {"first_name": "", "last_name": ""}
+            request.session["yandex_profile_suggested"] = suggest
+
         return user
 
     def get_user(self, user_id):
