@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Auth (draft)</title>
-        <style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auth (draft)</title>
+    <style>
             body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
             form { margin: 12px 0; }
             label { display: block; margin: 6px 0; }
@@ -12,121 +12,122 @@
             .msg { margin-top: 8px; color: #444; }
             .msg.error { color: #b00020; }
             .msg.success { color: #006400; }
-        </style>
-    </head>
-    <body>
-        <header>
-            {% if user_info %}
-                {% if user_info.first_name or user_info.last_name %}
-                    <p>Привет, {{ user_info.first_name }} {{ user_info.last_name }}!</p>
-                {% else %}
-                    <p>Привет, noname!</p>
-                {% endif %}
-                <p>Email: {{ user_info.email }}</p>
-                {% if yandex_suggested %}
-                    <div style="margin-top: 8px;
-                                padding: 8px;
-                                border: 1px dashed #aaa;
-                                max-width: 520px">
-                        <strong>Предложение из Yandex ID:</strong>
-                        <div>
-                            Имя: <em>{{ yandex_suggested.first_name|default:"—" }}</em>
-                        </div>
-                        <div>
-                            Фамилия: <em>{{ yandex_suggested.last_name|default:"—" }}</em>
-                        </div>
-                        <button id="applyYandexBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
-                        <div id="applyYandexMsg" class="msg"></div>
-                    </div>
-                {% endif %}
-                {% if github_suggested %}
-                    <div style="margin-top: 8px;
-                                padding: 8px;
-                                border: 1px dashed #aaa;
-                                max-width: 520px">
-                        <strong>Предложение из GitHub:</strong>
-                        <div>
-                            Имя: <em>{{ github_suggested.first_name|default:"—" }}</em>
-                        </div>
-                        <div>
-                            Фамилия: <em>{{ github_suggested.last_name|default:"—" }}</em>
-                        </div>
-                        <button id="applyGithubBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
-                        <div id="applyGithubMsg" class="msg"></div>
-                    </div>
-                {% endif %}
-                <br />
-                <form id="logoutForm" action="{% url 'logout' %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit">Выйти</button>
-                </form>
-                <div id="logoutMessage" class="msg"></div>
-            {% else %}
-                <a href="{% url 'yandex_auth' %}">Войти через Yandex ID</a>
-                <a href="{% url 'github_auth' %}">Войти через GitHub</a>
-                <br />
-                <br />
+    </style>
+  </head>
+  <body>
+    <header>
+      {% if user_info %}
+        <a href="{% url 'account_profile_edit' %}">Редактировать аккаунт</a>
+        {% if user_info.first_name or user_info.last_name %}
+          <p>Привет, {{ user_info.first_name }} {{ user_info.last_name }}!</p>
+        {% else %}
+          <p>Привет, noname!</p>
+        {% endif %}
+        <p>Email: {{ user_info.email }}</p>
+        {% if yandex_suggested %}
+          <div style="margin-top: 8px;
+                      padding: 8px;
+                      border: 1px dashed #aaa;
+                      max-width: 520px">
+            <strong>Предложение из Yandex ID:</strong>
+            <div>
+              Имя: <em>{{ yandex_suggested.first_name|default:"—" }}</em>
+            </div>
+            <div>
+              Фамилия: <em>{{ yandex_suggested.last_name|default:"—" }}</em>
+            </div>
+            <button id="applyYandexBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
+            <div id="applyYandexMsg" class="msg"></div>
+          </div>
+        {% endif %}
+        {% if github_suggested %}
+          <div style="margin-top: 8px;
+                      padding: 8px;
+                      border: 1px dashed #aaa;
+                      max-width: 520px">
+            <strong>Предложение из GitHub:</strong>
+            <div>
+              Имя: <em>{{ github_suggested.first_name|default:"—" }}</em>
+            </div>
+            <div>
+              Фамилия: <em>{{ github_suggested.last_name|default:"—" }}</em>
+            </div>
+            <button id="applyGithubBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
+            <div id="applyGithubMsg" class="msg"></div>
+          </div>
+        {% endif %}
+        <br />
+        <form id="logoutForm" action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit">Выйти</button>
+        </form>
+        <div id="logoutMessage" class="msg"></div>
+      {% else %}
+        <a href="{% url 'yandex_auth' %}">Войти через Yandex ID</a>
+        <a href="{% url 'github_auth' %}">Войти через GitHub</a>
+        <br />
+        <br />
 
-                <h2>Или зарегистрируйтесь по электронной&nbsp;почте</h2>
-                <form id="emailRegistrationForm">
-                    <label for="email">Email:</label>
-                    <input type="email"
-                           id="email"
-                           name="email"
-                           required
-                           value="user@example.com" />
+        <h2>Или зарегистрируйтесь по электронной&nbsp;почте</h2>
+        <form id="emailRegistrationForm">
+          <label for="email">Email:</label>
+          <input type="email"
+                 id="email"
+                 name="email"
+                 required
+                 value="user@example.com" />
 
-                    <label for="password">Пароль (Password2025):</label>
-                    <input type="password"
-                           id="password"
-                           name="password"
-                           required
-                           value="Password2025"
-                           autocomplete="new-password" />
+          <label for="password">Пароль (Password2025):</label>
+          <input type="password"
+                 id="password"
+                 name="password"
+                 required
+                 value="Password2025"
+                 autocomplete="new-password" />
 
-                    <label for="passwordAgain">Повторите пароль:</label>
-                    <input type="password"
-                           id="passwordAgain"
-                           name="passwordAgain"
-                           required
-                           value="Password2025" />
+          <label for="passwordAgain">Повторите пароль:</label>
+          <input type="password"
+                 id="passwordAgain"
+                 name="passwordAgain"
+                 required
+                 value="Password2025" />
 
-                    <label>
-                        <input type="checkbox" name="acceptTerms" id="acceptTerms" required checked />
-                        Я принимаю условия
-                    </label>
-                    <button type="submit">Зарегистрироваться</button>
-                </form>
-                <div id="registerMessage" class="msg"></div>
+          <label>
+            <input type="checkbox" name="acceptTerms" id="acceptTerms" required checked />
+            Я принимаю условия
+          </label>
+          <button type="submit">Зарегистрироваться</button>
+        </form>
+        <div id="registerMessage" class="msg"></div>
 
-                <h2>Или войдите по электронной&nbsp;почте</h2>
-                <form id="emailLoginForm">
-                    <label for="loginEmail">Email:</label>
-                    <input type="email"
-                           id="loginEmail"
-                           name="email"
-                           required
-                           value="user@example.com" />
+        <h2>Или войдите по электронной&nbsp;почте</h2>
+        <form id="emailLoginForm">
+          <label for="loginEmail">Email:</label>
+          <input type="email"
+                 id="loginEmail"
+                 name="email"
+                 required
+                 value="user@example.com" />
 
-                    <label for="loginPassword">Пароль:</label>
-                    <input type="password"
-                           id="loginPassword"
-                           name="password"
-                           required
-                           autocomplete="new-password"
-                           value="Password2025" />
-                    <br />
-                    <br />
-                    <button type="submit">Войти</button>
-                </form>
-                <div id="loginMessage" class="msg"></div>
-            {% endif %}
+          <label for="loginPassword">Пароль:</label>
+          <input type="password"
+                 id="loginPassword"
+                 name="password"
+                 required
+                 autocomplete="new-password"
+                 value="Password2025" />
+          <br />
+          <br />
+          <button type="submit">Войти</button>
+        </form>
+        <div id="loginMessage" class="msg"></div>
+      {% endif %}
 
-            <br />
-            <a href="/admin" target="_blank">admin</a>
-        </header>
+      <br />
+      <a href="/admin" target="_blank">admin</a>
+    </header>
 
-        <script>
+    <script>
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -291,6 +292,6 @@
           }
         });
       }
-        </script>
-    </body>
+    </script>
+  </body>
 </html>
