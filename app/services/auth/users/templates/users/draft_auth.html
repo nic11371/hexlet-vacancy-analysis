@@ -46,6 +46,41 @@
           </div>
         {% endif %}
         <br />
+        <h3>Подключённые провайдеры</h3>
+        <div>
+          <div>
+            GitHub: {{ linked.github|yesno:"подключён,не подключён" }}
+            {% if linked.github %}
+              <form method="post"
+                    action="{% url 'unlink_github' %}"
+                    style="display:inline;
+                           margin-left: 8px">
+                {% csrf_token %}
+                <button type="submit">Отключить</button>
+              </form>
+            {% endif %}
+          </div>
+          <div>
+            Yandex: {{ linked.yandex|yesno:"подключён,не подключён" }}
+            {% if linked.yandex %}
+              <form method="post"
+                    action="{% url 'unlink_yandex' %}"
+                    style="display:inline;
+                           margin-left: 8px">
+                {% csrf_token %}
+                <button type="submit">Отключить</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <h3>Подключить провайдера</h3>
+          <a href="{% url 'github_auth' %}?link=1">Подключить GitHub</a>
+          <br />
+          <a href="{% url 'yandex_auth' %}?link=1">Подключить Yandex ID</a>
+        </div>
+
         <form id="logoutForm" action="{% url 'logout' %}" method="post">
           {% csrf_token %}
           <button type="submit">Выйти</button>
@@ -114,6 +149,11 @@
 
       <br />
       <a href="/admin" target="_blank">admin</a>
+      {% if messages %}
+        <ul>
+          {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+        </ul>
+      {% endif %}
     </header>
 
     <script>
