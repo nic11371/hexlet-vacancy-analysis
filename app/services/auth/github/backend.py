@@ -17,6 +17,9 @@ class GithubBackend(BaseBackend):
     """
 
     def authenticate(self, request, code=None, **kwargs):
+        # игнорируем вызовы не для этого провайдера
+        if kwargs.get("provider") not in ("github", None):
+            return None
         if code is None:
             return None
         token = self._exchange_code_for_token(code)
@@ -28,10 +31,7 @@ class GithubBackend(BaseBackend):
             return None
 
         provider_user_id = self._get_provider_user_id(info)
-        if not provider_user_id:
-            return None
-
-        identity = self._get_identity(provider_user_id)
+        identity = self._get_identity(provider_user_id) if provider_user_id else None
         if identity:
             user = identity.user
         else:
@@ -41,7 +41,8 @@ class GithubBackend(BaseBackend):
             )
             if user is None:
                 return None
-            self._ensure_identity(user, provider_user_id, info, email_for_identity)
+            if provider_user_id:
+                self._ensure_identity(user, provider_user_id, info, email_for_identity)
 
         self._store_suggested_names(request, info)
         return user

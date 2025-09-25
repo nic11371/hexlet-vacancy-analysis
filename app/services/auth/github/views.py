@@ -86,7 +86,7 @@ def auth_callback(request):
     )
 
     # ауф через свой backend
-    user = authenticate(request, code=code, link_to_user=link_user)
+    user = authenticate(request, code=code, link_to_user=link_user, provider="github")
     if user is None:
         return HttpResponse("Authentication failed", status=400)
 

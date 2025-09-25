@@ -17,6 +17,9 @@ class YandexBackend(BaseBackend):
     """
 
     def authenticate(self, request, code=None, **kwargs):
+        # игнорируем вызовы не для этого провайдера
+        if kwargs.get("provider") not in ("yandex", None):
+            return None
         if code is None:
             return None
         # обмен code -> token
