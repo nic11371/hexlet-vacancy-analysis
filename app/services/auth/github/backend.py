@@ -19,71 +19,31 @@ class GithubBackend(BaseBackend):
     def authenticate(self, request, code=None, **kwargs):
         if code is None:
             return None
-        # обмен code -> token
         token = self._exchange_code_for_token(code)
         if not token:
             return None
 
-        # запрос профиля
         info = self._fetch_user_info(token)
         if not info:
             return None
 
-        # устойчивый id пользователя GitHub
-        provider_user_id = str(info.get("id") or "")
+        provider_user_id = self._get_provider_user_id(info)
         if not provider_user_id:
             return None
 
-        # если identity уже есть — возвращаем связанного пользователя
-        identity = (
-            UserIdentity.objects.select_related("user")
-            .filter(provider="github", provider_user_id=provider_user_id)
-            .first()
-        )
+        identity = self._get_identity(provider_user_id)
         if identity:
             user = identity.user
         else:
             link_to_user = kwargs.get("link_to_user")
-            if link_to_user is not None:
-                user = link_to_user
-            else:
-                # email может быть скрыт в профиле -> пытаемся получить из /user/emails
-                email = self._resolve_email(token, info)
-                if not email:
-                    return None
-                first_name, last_name = self._split_name(info)
-                defaults = {
-                    "first_name": first_name or "",
-                    "last_name": last_name or "",
-                }
-                user, _ = User.objects.get_or_create(email=email, defaults=defaults)
-
-            # создать identity
-            email_for_identity = None
-            if "email" in info and info.get("email"):
-                email_for_identity = info.get("email")
-            else:
-                # из /user/emails могли выбрать
-                try:
-                    email_for_identity = email  # type: ignore[name-defined]
-                except NameError:
-                    email_for_identity = None
-            UserIdentity.objects.create(
-                user=user,
-                provider="github",
-                provider_user_id=provider_user_id,
-                email=email_for_identity,
-                email_verified=bool(email_for_identity),
-                profile=info,
+            user, email_for_identity = self._resolve_user_for_auth(
+                request, info, token, link_to_user
             )
+            if user is None:
+                return None
+            self._ensure_identity(user, provider_user_id, info, email_for_identity)
 
-        # подсказка для обновления ФИО
-        if request is not None:
-            first_name, last_name = self._split_name(info)
-            request.session["github_profile_suggested"] = {
-                "first_name": first_name or "",
-                "last_name": last_name or "",
-            }
+        self._store_suggested_names(request, info)
         return user
 
     def get_user(self, user_id):
@@ -157,25 +117,44 @@ class GithubBackend(BaseBackend):
             first_name, last_name = (info.get("login") or ""), ""
         return first_name, last_name
 
-    def _update_user_names_if_needed(self, user, created, defaults):
-        first_name = defaults["first_name"]
-        last_name = defaults["last_name"]
-        updated = False
-        if not created:
-            if (
-                hasattr(user, "first_name")
-                and first_name
-                and user.first_name != first_name
-            ):
-                user.first_name = first_name
-                updated = True
-            if hasattr(user, "last_name") and last_name and user.last_name != last_name:
-                user.last_name = last_name
-                updated = True
-            if updated:
-                fields = []
-                if hasattr(user, "first_name"):
-                    fields.append("first_name")
-                if hasattr(user, "last_name"):
-                    fields.append("last_name")
-                user.save(update_fields=fields or None)
+    def _get_provider_user_id(self, info):
+        return str(info.get("id") or "")
+
+    def _get_identity(self, provider_user_id):
+        return (
+            UserIdentity.objects.select_related("user")
+            .filter(provider="github", provider_user_id=provider_user_id)
+            .first()
+        )
+
+    def _resolve_user_for_auth(self, request, info, token, link_to_user):
+        if link_to_user is not None:
+            email_for_identity = info.get("email") or self._resolve_email(token, info)
+            return link_to_user, email_for_identity
+
+        email = self._resolve_email(token, info)
+        if not email:
+            return None, None
+        first_name, last_name = self._split_name(info)
+        defaults = {"first_name": first_name or "", "last_name": last_name or ""}
+        user, _ = User.objects.get_or_create(email=email, defaults=defaults)
+        return user, email
+
+    def _ensure_identity(self, user, provider_user_id, info, email_for_identity):
+        UserIdentity.objects.create(
+            user=user,
+            provider="github",
+            provider_user_id=provider_user_id,
+            email=email_for_identity,
+            email_verified=bool(email_for_identity),
+            profile=info,
+        )
+
+    def _store_suggested_names(self, request, info):
+        if request is None:
+            return
+        first_name, last_name = self._split_name(info)
+        request.session["github_profile_suggested"] = {
+            "first_name": first_name or "",
+            "last_name": last_name or "",
+        }
