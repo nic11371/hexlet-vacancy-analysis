@@ -29,22 +29,7 @@
           <br />
           <a href="{% url 'github_auth' %}?apply=1">Обновить данные из GitHub</a>
         </div>
-        {% if github_suggested %}
-          <div style="margin-top: 8px;
-                      padding: 8px;
-                      border: 1px dashed #aaa;
-                      max-width: 520px">
-            <strong>Предложение из GitHub:</strong>
-            <div>
-              Имя: <em>{{ github_suggested.first_name|default:"—" }}</em>
-            </div>
-            <div>
-              Фамилия: <em>{{ github_suggested.last_name|default:"—" }}</em>
-            </div>
-            <button id="applyGithubBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
-            <div id="applyGithubMsg" class="msg"></div>
-          </div>
-        {% endif %}
+
         <br />
         <h3>Подключённые провайдеры</h3>
         <div>

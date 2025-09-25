@@ -44,12 +44,7 @@ def draft_auth(request):
             }
         except Exception:
             context["linked"] = {"github": False, "yandex": False}
-        suggested = request.session.get("yandex_profile_suggested")
-        if suggested:
-            context["yandex_suggested"] = suggested
-        gh_suggested = request.session.get("github_profile_suggested")
-        if gh_suggested:
-            context["github_suggested"] = gh_suggested
+
     return render(request, "users/draft_auth.html", context)
 
 
