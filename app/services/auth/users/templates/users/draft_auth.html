@@ -24,22 +24,11 @@
           <p>Привет, noname!</p>
         {% endif %}
         <p>Email: {{ user_info.email }}</p>
-        {% if yandex_suggested %}
-          <div style="margin-top: 8px;
-                      padding: 8px;
-                      border: 1px dashed #aaa;
-                      max-width: 520px">
-            <strong>Предложение из Yandex ID:</strong>
-            <div>
-              Имя: <em>{{ yandex_suggested.first_name|default:"—" }}</em>
-            </div>
-            <div>
-              Фамилия: <em>{{ yandex_suggested.last_name|default:"—" }}</em>
-            </div>
-            <button id="applyYandexBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
-            <div id="applyYandexMsg" class="msg"></div>
-          </div>
-        {% endif %}
+        <div style="margin-top: 8px;">
+          <a href="{% url 'yandex_auth' %}?apply=1">Обновить данные из Yandex ID</a>
+          <br />
+          <a href="{% url 'github_auth' %}?apply=1">Обновить данные из GitHub</a>
+        </div>
         {% if github_suggested %}
           <div style="margin-top: 8px;
                       padding: 8px;
@@ -237,61 +226,7 @@
         });
       }
 
-      const applyBtn = document.getElementById('applyYandexBtn');
-      const applyMsg = document.getElementById('applyYandexMsg');
-      if (applyBtn) {
-        applyBtn.addEventListener('click', async (e) => {
-          e.preventDefault();
-          applyMsg.textContent = '';
-          applyMsg.className = 'msg';
-          try {
-            const resp = await fetch('{% url "apply_yandex_profile" %}', {
-              method: 'POST',
-              headers: { 'X-CSRFToken': csrftoken || '' }
-            });
-            const data = await resp.json().catch(() => ({}));
-            if (resp.ok && data.status === 'ok') {
-              applyMsg.textContent = 'Обновлено: ' + (data.data.updated.join(', ') || 'нет изменений');
-              applyMsg.className = 'msg success';
-              setTimeout(() => window.location.reload(), 400);
-            } else {
-              applyMsg.textContent = (data && data.message) || 'Не удалось применить данные';
-              applyMsg.className = 'msg error';
-            }
-          } catch (err) {
-            applyMsg.textContent = 'Сетевая ошибка';
-            applyMsg.className = 'msg error';
-          }
-        });
-      }
-
-      const applyGhBtn = document.getElementById('applyGithubBtn');
-      const applyGhMsg = document.getElementById('applyGithubMsg');
-      if (applyGhBtn) {
-        applyGhBtn.addEventListener('click', async (e) => {
-          e.preventDefault();
-          applyGhMsg.textContent = '';
-          applyGhMsg.className = 'msg';
-          try {
-            const resp = await fetch('{% url "apply_github_profile" %}', {
-              method: 'POST',
-              headers: { 'X-CSRFToken': csrftoken || '' }
-            });
-            const data = await resp.json().catch(() => ({}));
-            if (resp.ok && data.status === 'ok') {
-              applyGhMsg.textContent = 'Обновлено: ' + (data.data.updated.join(', ') || 'нет изменений');
-              applyGhMsg.className = 'msg success';
-              setTimeout(() => window.location.reload(), 400);
-            } else {
-              applyGhMsg.textContent = (data && data.message) || 'Не удалось применить данные';
-              applyGhMsg.className = 'msg error';
-            }
-          } catch (err) {
-            applyGhMsg.textContent = 'Сетевая ошибка';
-            applyGhMsg.className = 'msg error';
-          }
-        });
-      }
+      // Кнопки обновления теперь просто запускают OAuth с флагом apply=1 (без JS)
     </script>
   </body>
 </html>

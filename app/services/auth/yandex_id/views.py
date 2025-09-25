@@ -35,7 +35,10 @@ def start_auth(request):
 
     # привязка next к state для нескольких вкладок
     flows = request.session.get("oauth_flows", {})
-    flows[state] = {"next": next_url}
+    # если запрос пришёл с параметром apply=1,
+    # то после колбэка применим обновление профиля
+    apply_flag = (request.GET.get("apply") or "").lower() in ("1", "true", "yes")
+    flows[state] = {"next": next_url, "apply": apply_flag}
     request.session["oauth_flows"] = flows
 
     # адрес авторизации
@@ -95,5 +98,23 @@ def auth_callback(request):
         )
     ):
         next_url = reverse("auth_draft")
+
+    # если был запрос на принудительное обновление профиля,
+    # то применяем подсказанные значения
+    if flow.get("apply"):
+        suggested = request.session.get("yandex_profile_suggested")
+        if suggested and request.user.is_authenticated:
+            first_name = (suggested.get("first_name") or "").strip()
+            last_name = (suggested.get("last_name") or "").strip()
+            updates = {}
+            if first_name and request.user.first_name != first_name:
+                updates["first_name"] = first_name
+            if last_name and request.user.last_name != last_name:
+                updates["last_name"] = last_name
+            if updates:
+                for k, v in updates.items():
+                    setattr(request.user, k, v)
+                request.user.save(update_fields=list(updates.keys()))
+            request.session.pop("yandex_profile_suggested", None)
 
     return redirect(next_url)
