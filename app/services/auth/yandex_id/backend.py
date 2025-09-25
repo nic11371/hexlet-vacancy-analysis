@@ -22,84 +22,104 @@ class YandexBackend(BaseBackend):
             return None
         if code is None:
             return None
-        # обмен code -> token
-        res = requests.post(
-            "https://oauth.yandex.ru/token",
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "client_id": settings.YANDEX_CLIENT_ID,
-                "client_secret": settings.YANDEX_CLIENT_SECRET,
-            },
-        )
-        try:
-            res.raise_for_status()
-        except requests.RequestException:
-            return None
-        token = res.json().get("access_token")
+
+        token = self._exchange_code_for_token(code)
         if not token:
             return None
 
-        # запрос профиля
-        info_res = requests.get(
-            "https://login.yandex.ru/info",
-            params={"format": "json"},
-            headers={"Authorization": f"OAuth {token}"},
-        )
-        try:
-            info_res.raise_for_status()
-        except requests.RequestException:
-            return None
-        info = info_res.json()
-        email = info.get("default_email")
-        # устойчивый идентификатор пользователя у Яндекса
-        provider_user_id = str(info.get("id") or info.get("psuid") or email or "")
-        if not provider_user_id:
+        info = self._fetch_user_info(token)
+        if not info:
             return None
 
-        # если identity уже существует — возвращаем связанного пользователя
-        identity = (
-            UserIdentity.objects.select_related("user")
-            .filter(provider="yandex", provider_user_id=provider_user_id)
-            .first()
-        )
+        provider_user_id = self._get_provider_user_id(info)
+
+        identity = self._get_identity(provider_user_id) if provider_user_id else None
         if identity:
             user = identity.user
         else:
             link_to_user = kwargs.get("link_to_user")
-            if link_to_user is not None:
-                user = link_to_user
-            else:
-                # создать/найти пользователя по email (если есть)
-                defaults = {
-                    "first_name": info.get("first_name", ""),
-                    "last_name": info.get("last_name", ""),
-                }
-                if email:
-                    user, _ = User.objects.get_or_create(email=email, defaults=defaults)
-                else:
-                    # без email создать пользователя в нашей модели нельзя
-                    return None
+            user, email_for_identity = self._resolve_user_for_auth(info, link_to_user)
+            if user is None:
+                return None
+            if provider_user_id:
+                self._ensure_identity(user, provider_user_id, info, email_for_identity)
 
-            # создать identity для пользователя
-            UserIdentity.objects.create(
-                user=user,
-                provider="yandex",
-                provider_user_id=provider_user_id,
-                email=email,
-                email_verified=bool(email),
-                profile=info,
-            )
-
-        # подсказка для обновления имени/фамилии
-        if request is not None:
-            suggest = {
-                "first_name": info.get("first_name", ""),
-                "last_name": info.get("last_name", ""),
-            }
-            request.session["yandex_profile_suggested"] = suggest
-
+        self._store_suggested_names(request, info)
         return user
+
+    # --- helpers ---
+    def _exchange_code_for_token(self, code):
+        try:
+            res = requests.post(
+                "https://oauth.yandex.ru/token",
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "client_id": settings.YANDEX_CLIENT_ID,
+                    "client_secret": settings.YANDEX_CLIENT_SECRET,
+                },
+            )
+            res.raise_for_status()
+            return res.json().get("access_token")
+        except requests.RequestException:
+            return None
+
+    def _fetch_user_info(self, token):
+        try:
+            info_res = requests.get(
+                "https://login.yandex.ru/info",
+                params={"format": "json"},
+                headers={"Authorization": f"OAuth {token}"},
+            )
+            info_res.raise_for_status()
+            return info_res.json()
+        except requests.RequestException:
+            return None
+
+    def _get_provider_user_id(self, info):
+        return str(
+            info.get("id") or info.get("psuid") or info.get("default_email") or ""
+        )
+
+    def _get_identity(self, provider_user_id):
+        return (
+            UserIdentity.objects.select_related("user")
+            .filter(provider="yandex", provider_user_id=provider_user_id)
+            .first()
+        )
+
+    def _resolve_user_for_auth(self, info, link_to_user):
+        if link_to_user is not None:
+            return link_to_user, info.get("default_email")
+
+        email = info.get("default_email")
+        if not email:
+            return None, None
+        defaults = {
+            "first_name": info.get("first_name", ""),
+            "last_name": info.get("last_name", ""),
+        }
+        user, _ = User.objects.get_or_create(email=email, defaults=defaults)
+        return user, email
+
+    def _ensure_identity(self, user, provider_user_id, info, email_for_identity):
+        UserIdentity.objects.create(
+            user=user,
+            provider="yandex",
+            provider_user_id=provider_user_id,
+            email=email_for_identity,
+            email_verified=bool(email_for_identity),
+            profile=info,
+        )
+
+    def _store_suggested_names(self, request, info):
+        if request is None:
+            return
+        suggest = {
+            "first_name": info.get("first_name", ""),
+            "last_name": info.get("last_name", ""),
+        }
+        request.session["yandex_profile_suggested"] = suggest
 
     def get_user(self, user_id):
         try:
