@@ -180,6 +180,3 @@ class YandexIDViewsTests(TestCase):
                 reverse("yandex_callback") + f"?state={state}&code=ok"
             )
         self.assertRedirects(resp_cb, reverse("auth_draft"))
-
-
-## Email form routes/views removed; corresponding tests deleted.

@@ -39,6 +39,22 @@
                         <div id="applyYandexMsg" class="msg"></div>
                     </div>
                 {% endif %}
+                {% if github_suggested %}
+                    <div style="margin-top: 8px;
+                                padding: 8px;
+                                border: 1px dashed #aaa;
+                                max-width: 520px">
+                        <strong>Предложение из GitHub:</strong>
+                        <div>
+                            Имя: <em>{{ github_suggested.first_name|default:"—" }}</em>
+                        </div>
+                        <div>
+                            Фамилия: <em>{{ github_suggested.last_name|default:"—" }}</em>
+                        </div>
+                        <button id="applyGithubBtn" style="margin-top: 6px;">Применить имя и фамилию</button>
+                        <div id="applyGithubMsg" class="msg"></div>
+                    </div>
+                {% endif %}
                 <br />
                 <form id="logoutForm" action="{% url 'logout' %}" method="post">
                     {% csrf_token %}
@@ -47,6 +63,7 @@
                 <div id="logoutMessage" class="msg"></div>
             {% else %}
                 <a href="{% url 'yandex_auth' %}">Войти через Yandex ID</a>
+                <a href="{% url 'github_auth' %}">Войти через GitHub</a>
                 <br />
                 <br />
 
@@ -243,6 +260,34 @@
           } catch (err) {
             applyMsg.textContent = 'Сетевая ошибка';
             applyMsg.className = 'msg error';
+          }
+        });
+      }
+
+      const applyGhBtn = document.getElementById('applyGithubBtn');
+      const applyGhMsg = document.getElementById('applyGithubMsg');
+      if (applyGhBtn) {
+        applyGhBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          applyGhMsg.textContent = '';
+          applyGhMsg.className = 'msg';
+          try {
+            const resp = await fetch('{% url "apply_github_profile" %}', {
+              method: 'POST',
+              headers: { 'X-CSRFToken': csrftoken || '' }
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.status === 'ok') {
+              applyGhMsg.textContent = 'Обновлено: ' + (data.data.updated.join(', ') || 'нет изменений');
+              applyGhMsg.className = 'msg success';
+              setTimeout(() => window.location.reload(), 400);
+            } else {
+              applyGhMsg.textContent = (data && data.message) || 'Не удалось применить данные';
+              applyGhMsg.className = 'msg error';
+            }
+          } catch (err) {
+            applyGhMsg.textContent = 'Сетевая ошибка';
+            applyGhMsg.className = 'msg error';
           }
         });
       }

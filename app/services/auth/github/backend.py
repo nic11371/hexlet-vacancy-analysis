@@ -40,9 +40,12 @@ class GithubBackend(BaseBackend):
         }
         user, created = User.objects.get_or_create(email=email, defaults=defaults)
 
-        # при повторной авторизации обновляем имя и фамилию,
-        # если они отличаются от данных из GitHub
-        self._update_user_names_if_needed(user, created, defaults)
+        # обновление данных
+        if request is not None:
+            request.session["github_profile_suggested"] = {
+                "first_name": defaults.get("first_name", ""),
+                "last_name": defaults.get("last_name", ""),
+            }
         return user
 
     def get_user(self, user_id):

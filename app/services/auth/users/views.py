@@ -34,6 +34,9 @@ def draft_auth(request):
         suggested = request.session.get("yandex_profile_suggested")
         if suggested:
             context["yandex_suggested"] = suggested
+        gh_suggested = request.session.get("github_profile_suggested")
+        if gh_suggested:
+            context["github_suggested"] = gh_suggested
     return render(request, "users/draft_auth.html", context)
 
 
@@ -72,6 +75,42 @@ def apply_yandex_profile(request):
         del request.session["yandex_profile_suggested"]
     except KeyError:
         pass
+
+    return JsonResponse({"status": "ok", "data": {"updated": list(updates.keys())}})
+
+
+def apply_github_profile(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "error", "message": "Method not allowed"}, status=405
+        )
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"status": "error", "message": "Authentication required"}, status=401
+        )
+
+    suggested = request.session.get("github_profile_suggested")
+    if not suggested:
+        return JsonResponse(
+            {"status": "error", "message": "No suggested data"}, status=404
+        )
+
+    first_name = (suggested.get("first_name") or "").strip()
+    last_name = (suggested.get("last_name") or "").strip()
+
+    user = request.user
+    updates = {}
+    if first_name and user.first_name != first_name:
+        updates["first_name"] = first_name
+    if last_name and user.last_name != last_name:
+        updates["last_name"] = last_name
+
+    if updates:
+        for k, v in updates.items():
+            setattr(user, k, v)
+        user.save(update_fields=list(updates.keys()))
+
+    request.session.pop("github_profile_suggested", None)
 
     return JsonResponse({"status": "ok", "data": {"updated": list(updates.keys())}})
 
