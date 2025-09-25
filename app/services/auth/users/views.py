@@ -31,6 +31,9 @@ def draft_auth(request):
             "first_name": getattr(request.user, "first_name", ""),
             "last_name": getattr(request.user, "last_name", ""),
         }
+        suggested = request.session.get("yandex_profile_suggested")
+        if suggested:
+            context["yandex_suggested"] = suggested
     return render(request, "users/draft_auth.html", context)
 
 
