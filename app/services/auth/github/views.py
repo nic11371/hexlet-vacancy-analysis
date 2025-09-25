@@ -11,6 +11,7 @@ from app.services.auth.common import (
     oauth_apply_profile_if_requested,
     oauth_compute_next,
     oauth_parse_apply_flag,
+    oauth_parse_link_flag,
     oauth_pop_flow,
     oauth_read_code,
     oauth_resolve_next,
@@ -35,9 +36,10 @@ def start_auth(request):
 
     # привязка next к state для нескольких вкладок
     apply_flag = oauth_parse_apply_flag(request)
+    link_flag = oauth_parse_link_flag(request)
     from app.services.auth.common import oauth_save_flow
 
-    oauth_save_flow(request, state, next_url, apply_flag)
+    oauth_save_flow(request, state, next_url, apply_flag, link_flag)
 
     # адрес авторизации
     params = {
@@ -74,8 +76,17 @@ def auth_callback(request):
         return result
     code = result
 
+    # link-flow: если был link=1 и пользователь уже залогинен,
+    # привязываем провайдера к текущему пользователю
+    flow_peek = request.session.get("oauth_flows", {}).get(returned_state, {})
+    link_user = (
+        request.user
+        if (flow_peek.get("link") and request.user.is_authenticated)
+        else None
+    )
+
     # ауф через свой backend
-    user = authenticate(request, code=code)
+    user = authenticate(request, code=code, link_to_user=link_user)
     if user is None:
         return HttpResponse("Authentication failed", status=400)
 

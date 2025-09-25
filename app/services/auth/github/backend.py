@@ -3,6 +3,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
 
+from app.services.auth.users.models import UserIdentity
+
 User = get_user_model()
 
 
@@ -27,24 +29,60 @@ class GithubBackend(BaseBackend):
         if not info:
             return None
 
-        # email может быть скрыт в профиле -> пытаемся получить из /user/emails
-        email = self._resolve_email(token, info)
-        if not email:
+        # устойчивый id пользователя GitHub
+        provider_user_id = str(info.get("id") or "")
+        if not provider_user_id:
             return None
 
-        # создать/обновить user
-        first_name, last_name = self._split_name(info)
-        defaults = {
-            "first_name": first_name or "",
-            "last_name": last_name or "",
-        }
-        user, created = User.objects.get_or_create(email=email, defaults=defaults)
+        # если identity уже есть — возвращаем связанного пользователя
+        identity = (
+            UserIdentity.objects.select_related("user")
+            .filter(provider="github", provider_user_id=provider_user_id)
+            .first()
+        )
+        if identity:
+            user = identity.user
+        else:
+            link_to_user = kwargs.get("link_to_user")
+            if link_to_user is not None:
+                user = link_to_user
+            else:
+                # email может быть скрыт в профиле -> пытаемся получить из /user/emails
+                email = self._resolve_email(token, info)
+                if not email:
+                    return None
+                first_name, last_name = self._split_name(info)
+                defaults = {
+                    "first_name": first_name or "",
+                    "last_name": last_name or "",
+                }
+                user, _ = User.objects.get_or_create(email=email, defaults=defaults)
 
-        # обновление данных
+            # создать identity
+            email_for_identity = None
+            if "email" in info and info.get("email"):
+                email_for_identity = info.get("email")
+            else:
+                # из /user/emails могли выбрать
+                try:
+                    email_for_identity = email  # type: ignore[name-defined]
+                except NameError:
+                    email_for_identity = None
+            UserIdentity.objects.create(
+                user=user,
+                provider="github",
+                provider_user_id=provider_user_id,
+                email=email_for_identity,
+                email_verified=bool(email_for_identity),
+                profile=info,
+            )
+
+        # подсказка для обновления ФИО
         if request is not None:
+            first_name, last_name = self._split_name(info)
             request.session["github_profile_suggested"] = {
-                "first_name": defaults.get("first_name", ""),
-                "last_name": defaults.get("last_name", ""),
+                "first_name": first_name or "",
+                "last_name": last_name or "",
             }
         return user
 

@@ -20,11 +20,19 @@ def oauth_parse_apply_flag(request) -> bool:
     return (request.GET.get("apply") or "").lower() in ("1", "true", "yes")
 
 
+def oauth_parse_link_flag(request) -> bool:
+    return (request.GET.get("link") or "").lower() in ("1", "true", "yes")
+
+
 def oauth_save_flow(
-    request, state: str, next_url: Optional[str], apply_flag: bool
+    request,
+    state: str,
+    next_url: Optional[str],
+    apply_flag: bool,
+    link_flag: bool = False,
 ) -> None:
     flows: Dict[str, Dict[str, Any]] = request.session.get("oauth_flows", {})
-    flows[state] = {"next": next_url, "apply": apply_flag}
+    flows[state] = {"next": next_url, "apply": apply_flag, "link": link_flag}
     request.session["oauth_flows"] = flows
 
 
