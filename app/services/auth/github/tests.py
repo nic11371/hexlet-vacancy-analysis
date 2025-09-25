@@ -6,6 +6,7 @@ from django.test import Client, TestCase
 from django.urls import resolve, reverse
 
 from app.services.auth.github import views
+from app.services.auth.users.models import UserIdentity
 
 User = get_user_model()
 
@@ -191,3 +192,112 @@ class GithubViewsTests(TestCase):
         self.assertRedirects(resp_cb, reverse("auth_draft"))
 
     # email form routes removed; corresponding tests deleted.
+
+
+class GithubLinkFlowTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_start_auth_sets_link_flag(self):
+        resp = self.client.get(reverse("github_auth") + "?link=1")
+        self.assertEqual(resp.status_code, 302)
+        state = self.client.session["oauth_state"]
+        flows = self.client.session.get("oauth_flows", {})
+        self.assertTrue(flows[state]["link"])  # link flag saved
+
+    @patch("app.services.auth.github.backend.requests.get")
+    @patch("app.services.auth.github.backend.requests.post")
+    def test_link_flow_creates_identity_for_current_user(self, mock_post, mock_get):
+        # существующий пользователь залогинен
+        current = User.objects.create_user(
+            email="me@example.com", password="Password2025"
+        )
+        self.client.force_login(current)
+
+        # моки для OAuth
+        mock_post.return_value = SimpleNamespace(
+            raise_for_status=lambda: None,
+            json=lambda: {"access_token": "gh_token"},
+        )
+
+        def _mock_get(url, *args, **kwargs):
+            if url.endswith("/user"):
+                return SimpleNamespace(
+                    raise_for_status=lambda: None,
+                    json=lambda: {
+                        "id": 12345,
+                        "login": "octocat",
+                        "name": "Octo Cat",
+                        "email": None,
+                    },
+                )
+            elif url.endswith("/user/emails"):
+                return SimpleNamespace(
+                    raise_for_status=lambda: None,
+                    json=lambda: [
+                        {"email": "octo@example.com", "verified": True, "primary": True}
+                    ],
+                )
+            raise AssertionError("Unexpected URL " + url)
+
+        mock_get.side_effect = _mock_get
+
+        # старт с link=1
+        _ = self.client.get(reverse("github_auth") + "?link=1")
+        state = self.client.session["oauth_state"]
+
+        # колбэк
+        resp_cb = self.client.get(reverse("github_callback") + f"?state={state}&code=ok")
+        self.assertEqual(resp_cb.status_code, 302)
+
+        # связь создана и привязана к текущему пользователю
+        self.assertTrue(
+            UserIdentity.objects.filter(
+                provider="github", provider_user_id="12345", user=current
+            ).exists()
+        )
+        # остался залогинен текущий пользователь
+        self.assertEqual(int(self.client.session.get("_auth_user_id")), current.pk)
+
+    @patch("app.services.auth.github.backend.requests.get")
+    @patch("app.services.auth.github.backend.requests.post")
+    def test_link_apply_updates_name(self, mock_post, mock_get):
+        current = User.objects.create_user(
+            email="me@example.com", password="Password2025"
+        )
+        self.client.force_login(current)
+
+        mock_post.return_value = SimpleNamespace(
+            raise_for_status=lambda: None,
+            json=lambda: {"access_token": "gh_token"},
+        )
+
+        def _mock_get(url, *args, **kwargs):
+            if url.endswith("/user"):
+                return SimpleNamespace(
+                    raise_for_status=lambda: None,
+                    json=lambda: {
+                        "id": 999,
+                        "login": "octocat",
+                        "name": "Octo Cat",
+                        "email": None,
+                    },
+                )
+            elif url.endswith("/user/emails"):
+                return SimpleNamespace(
+                    raise_for_status=lambda: None,
+                    json=lambda: [
+                        {"email": "octo@example.com", "verified": True, "primary": True}
+                    ],
+                )
+            raise AssertionError("Unexpected URL " + url)
+
+        mock_get.side_effect = _mock_get
+
+        # старт с link=1 и apply=1
+        _ = self.client.get(reverse("github_auth") + "?link=1&apply=1")
+        state = self.client.session["oauth_state"]
+        _ = self.client.get(reverse("github_callback") + f"?state={state}&code=ok")
+
+        current.refresh_from_db()
+        self.assertEqual((current.first_name, current.last_name), ("Octo", "Cat"))
