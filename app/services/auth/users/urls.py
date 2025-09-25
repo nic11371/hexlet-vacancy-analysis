@@ -12,5 +12,6 @@ urlpatterns = [
     path('login/', views.LoginUserView.as_view(), name='login'),
     path('logout/', views.LogoutUserView.as_view(), name='logout'),
     path('csrf/', views.get_csrf_token, name='csrf'),
+    path("github/", include("app.services.auth.github.urls")),
     path("yandex/", include("app.services.auth.yandex_id.urls")),
 ]
