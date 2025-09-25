@@ -2,36 +2,14 @@ import secrets
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_POST
 from inertia import location
 
-from app.services.auth.users import exceptions as custom_ex
-from app.services.auth.users.logic.registration import register_user
-from app.services.auth.users.logic.validators import normalize_email
-
 User = get_user_model()
-
-
-def draft_login(request):
-    """
-    Рендерит страницу с кнопкой входа через Yandex ID и показывает данные пользователя,
-    если он залогинен.
-    """
-    context = {}
-    if request.user.is_authenticated:
-        context["yandex_user"] = {
-            "email": request.user.email,
-            "first_name": request.user.first_name,
-            "last_name": request.user.last_name,
-        }
-    return render(request, "yandex_id/draft_yandex_auth.html", context)
 
 
 def start_auth(request):
@@ -116,65 +94,6 @@ def auth_callback(request):
             require_https=request.is_secure(),
         )
     ):
-        next_url = reverse("yandex_login")
+        next_url = reverse("auth_draft")
 
     return redirect(next_url)
-
-
-@require_POST
-def email_register(request):
-    """
-    Вызывает register_user для html форм.
-    """
-    email = (request.POST.get("email") or "").strip()
-    password = request.POST.get("password") or ""
-    password_again = request.POST.get("passwordAgain") or ""
-    accept = request.POST.get("acceptTerms") in ("on", "true", "1", True)
-
-    data = {
-        "email": email,
-        "password": password,
-        "passwordAgain": password_again,
-        "acceptTerms": accept,
-        "domain": get_current_site(request).domain,
-    }
-
-    try:
-        _user_id = register_user(data)
-        messages.success(request, "Регистрация прошла. Проверьте почту для активации.")
-    except custom_ex.ValidationError as e:
-        messages.error(request, e.message)
-    except custom_ex.CreateUserError as e:
-        messages.error(request, e.message)
-    except custom_ex.SendEmailError as e:
-        messages.error(request, e.message)
-    except custom_ex.CustomBaseError as e:
-        messages.error(request, e.message)
-
-    return redirect("yandex_login")
-
-
-@require_POST
-def email_login(request):
-    """
-    Логин по почте (EmailAuthBackend).
-    """
-    email = normalize_email(request.POST.get("email") or "")
-    password = request.POST.get("password") or ""
-
-    if not (email and password):
-        messages.error(request, "Email and password required")
-        return redirect("yandex_login")
-
-    user = authenticate(request, email=email, password=password)
-    if user is None:
-        messages.error(request, "Invalid credential")
-        return redirect("yandex_login")
-
-    if not getattr(user, "is_active", False):
-        messages.error(request, "User in not active")
-        return redirect("yandex_login")
-
-    login(request, user)
-    messages.success(request, "Вход выполнен.")
-    return redirect("yandex_login")
