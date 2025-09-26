@@ -17,6 +17,7 @@ PASS_NO_MATCH_MSG = "The passwords entered do not match."
 EMAIL_ALREADY_EXIST_MSG = "This Email already exists."
 ACCEPT_TERMS_MSG = "Terms must be accepted"
 INVALID_PHONE_MSG = "Invalid phone"
+PHONE_ALREADY_EXIST_MSG = "Phone already in use"
 
 
 def normalize_email(email):
@@ -46,11 +47,13 @@ def check_error_validation(register_data):
         return SHORT_PASSWORD_MSG, 400
     if not accept_terms:
         return ACCEPT_TERMS_MSG, 400
-    # формат телефона
+    # формат телефона и проверка уникальности
     try:
-        normalize_phone_number(phone)
+        normalized_phone = normalize_phone_number(phone)
     except ValidationError:
         return INVALID_PHONE_MSG, 400
+    if User.objects.filter(phone=normalized_phone.number).exists():
+        return PHONE_ALREADY_EXIST_MSG, 409
     email = normalize_email(email)
     if User.objects.filter(email=email, is_active=True).exists():
         return EMAIL_ALREADY_EXIST_MSG, 409

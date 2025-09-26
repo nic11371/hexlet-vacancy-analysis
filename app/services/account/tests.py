@@ -64,3 +64,45 @@ class ProfileEditViewTests(TestCase):
         )
         self.assertEqual(resp.status_code, 303)
         self.assertEqual(resp["Location"], reverse("account_profile_edit"))
+
+    def test_post_inertia_update_phone_success(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(
+            self.url,
+            {"first_name": "", "last_name": "", "phone": "8" + "9991234567"},
+            HTTP_X_INERTIA="true",
+        )
+        self.assertEqual(resp.status_code, 303)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.phone, "+79991234567")
+
+    def test_post_inertia_phone_invalid(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(
+            self.url,
+            {"first_name": "", "last_name": "", "phone": "123"},
+            HTTP_X_INERTIA="true",
+        )
+        self.assertEqual(resp.status_code, 422)
+        data = json.loads(resp.content)
+        props = data.get("props", {})
+        self.assertIn("errors", props)
+        self.assertIn("phone", props["errors"])
+
+    def test_post_inertia_phone_duplicate(self):
+        # другой пользователь с этим же телефоном
+        U = get_user_model()
+        U.objects.create_user(
+            email="another@example.com", password="pass123", phone="+79991234567"
+        )
+        self.client.force_login(self.user)
+        resp = self.client.post(
+            self.url,
+            {"first_name": "", "last_name": "", "phone": "+79991234567"},
+            HTTP_X_INERTIA="true",
+        )
+        self.assertEqual(resp.status_code, 422)
+        data = json.loads(resp.content)
+        props = data.get("props", {})
+        self.assertIn("errors", props)
+        self.assertEqual(props["errors"].get("phone"), "Phone already in use")

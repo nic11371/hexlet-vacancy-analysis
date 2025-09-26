@@ -194,6 +194,15 @@ class YandexIDLinkFlowTests(TestCase):
         flows = self.client.session.get("oauth_flows", {})
         self.assertTrue(flows[state]["link"])  # link flag saved
 
+    def test_apply_blocked_when_not_linked(self):
+        self.client.force_login(
+            User.objects.create_user(email="me@example.com", password="Password2025")
+        )
+        resp = self.client.get(reverse("yandex_auth") + "?apply=1")
+        self.assertRedirects(
+            resp, reverse("auth_draft"), status_code=303, fetch_redirect_response=False
+        )
+
     @patch("app.services.auth.yandex_id.backend.requests.get")
     @patch("app.services.auth.yandex_id.backend.requests.post")
     def test_link_flow_creates_identity_for_current_user(self, mock_post, mock_get):

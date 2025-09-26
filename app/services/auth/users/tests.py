@@ -153,3 +153,65 @@ class UsersTest(BaseAuthTest):
         self.assertEqual(
             response.content, b'{"status": "ok", "message": "User logged out"}'
         )
+
+    def test_register_user_without_phone(self):
+        data = {
+            "email": "nopho@example.com",
+            "password": "Qwerty123",
+            "passwordAgain": "Qwerty123",
+            "acceptTerms": True,
+        }
+        resp = self.register_user(self.client, data)
+        self.assertEqual(resp.status_code, 400)
+        payload = json.loads(resp.content)
+        self.assertEqual(payload.get("status"), "error")
+
+    def test_register_user_with_invalid_phone(self):
+        data = {
+            "email": "badphone@example.com",
+            "password": "Qwerty123",
+            "passwordAgain": "Qwerty123",
+            "acceptTerms": True,
+            "phone": "123",
+        }
+        resp = self.register_user(self.client, data)
+        self.assertEqual(resp.status_code, 400)
+        payload = json.loads(resp.content)
+        self.assertEqual(payload.get("status"), "error")
+
+    def test_register_phone_normalization(self):
+        data = {
+            "email": "norm@example.com",
+            "password": "Qwerty123",
+            "passwordAgain": "Qwerty123",
+            "acceptTerms": True,
+            "phone": "8" + "9991234567",
+        }
+        resp = self.register_user(self.client, data)
+        self.assertIn(resp.status_code, [200, 201])
+        user = get_user_model().objects.get(email="norm@example.com")
+        self.assertEqual(user.phone, "+79991234567")
+
+    def test_register_phone_duplicate(self):
+        # first user
+        first = {
+            "email": "dupa@example.com",
+            "password": "Qwerty123",
+            "passwordAgain": "Qwerty123",
+            "acceptTerms": True,
+            "phone": "+79990001122",
+        }
+        self.register_user(self.client, first)
+
+        # second with same phone
+        second = {
+            "email": "dupb@example.com",
+            "password": "Qwerty123",
+            "passwordAgain": "Qwerty123",
+            "acceptTerms": True,
+            "phone": "+79990001122",
+        }
+        resp = self.register_user(self.client, second)
+        self.assertEqual(resp.status_code, 409)
+        payload = json.loads(resp.content)
+        self.assertEqual(payload.get("status"), "error")
