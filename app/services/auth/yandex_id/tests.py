@@ -250,7 +250,13 @@ class YandexIDLinkFlowTests(TestCase):
             },
         )
 
-        _ = self.client.get(reverse("yandex_auth") + "?link=1&apply=1")
+        # сначала линкуем провайдера (link=1)
+        _ = self.client.get(reverse("yandex_auth") + "?link=1")
+        state = self.client.session["oauth_state"]
+        _ = self.client.get(reverse("yandex_callback") + f"?state={state}&code=ok")
+
+        # затем обновляем данные (apply=1)
+        _ = self.client.get(reverse("yandex_auth") + "?apply=1")
         state = self.client.session["oauth_state"]
         _ = self.client.get(reverse("yandex_callback") + f"?state={state}&code=ok")
 
