@@ -2,9 +2,11 @@ import secrets
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.urls import reverse
 from inertia import location
 
 from app.services.auth.common import (
@@ -33,11 +35,26 @@ def start_auth(request):
     # откуда вернуться
     next_url = oauth_compute_next(request)
 
-    # привязка next к state для нескольких вкладок
+    # флаги apply/link
     from app.services.auth.common import oauth_save_flow
 
     apply_flag = oauth_parse_apply_flag(request)
     link_flag = oauth_parse_link_flag(request)
+
+    # если запросили apply, но провайдер не подключён — запрещаем
+    if apply_flag and request.user.is_authenticated:
+        identities = getattr(request.user, "identities", None)
+        is_linked = (
+            bool(identities.filter(provider="yandex").exists()) if identities else False
+        )
+        if not is_linked:
+            messages.error(
+                request, "Сначала подключите Yandex ID, затем обновляйте данные."
+            )
+            resp = redirect(reverse("auth_draft"))
+            resp.status_code = 303
+            return resp
+
     oauth_save_flow(request, state, next_url, apply_flag, link_flag)
 
     # адрес авторизации

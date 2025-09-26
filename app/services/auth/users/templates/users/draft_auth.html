@@ -25,9 +25,13 @@
         {% endif %}
         <p>Email: {{ user_info.email }}</p>
         <div style="margin-top: 8px;">
-          <a href="{% url 'yandex_auth' %}?apply=1">Обновить данные из Yandex ID</a>
-          <br />
-          <a href="{% url 'github_auth' %}?apply=1">Обновить данные из GitHub</a>
+          {% if linked.yandex %}
+            <a href="{% url 'yandex_auth' %}?apply=1">Обновить данные из Yandex ID</a>
+            <br />
+          {% endif %}
+          {% if linked.github %}
+            <a href="{% url 'github_auth' %}?apply=1">Обновить данные из GitHub</a>
+          {% endif %}
         </div>
 
         <br />
