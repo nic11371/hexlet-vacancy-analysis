@@ -83,6 +83,8 @@
 
         <h2>Или зарегистрируйтесь по электронной&nbsp;почте</h2>
         <form id="emailRegistrationForm">
+          <label for="phone">Телефон (Россия):</label>
+          <input type="tel" id="phone" name="phone" required value="+79991234567" />
           <label for="email">Email:</label>
           <input type="email"
                  id="email"
@@ -162,6 +164,7 @@
           regMsg.textContent = '';
           regMsg.className = 'msg';
           const payload = {
+            phone: regForm.phone.value.trim(),
             email: regForm.email.value.trim(),
             password: regForm.password.value,
             passwordAgain: regForm.passwordAgain.value,

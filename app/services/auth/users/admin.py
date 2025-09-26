@@ -11,6 +11,7 @@ class UserAdmin(UAdmin):
         "email",
         "first_name",
         "last_name",
+        "phone",
         "is_staff",
         "is_active",
         "is_superuser",
@@ -18,13 +19,23 @@ class UserAdmin(UAdmin):
     )
     list_filter = ("is_staff", "is_active", "is_superuser")
     ordering = ("email",)
-    search_fields = ("email", "first_name", "last_name")
+    search_fields = ("email", "first_name", "last_name", "phone")
     readonly_fields = ("created_at",)
     date_hierarchy = "created_at"
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name", "created_at")}),
+        (
+            "Personal info",
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "phone",
+                    "created_at",
+                )
+            },
+        ),
         (
             "Permissions",
             {

@@ -14,6 +14,7 @@ class ProfileEditView(View):
             "email": getattr(user, "email", None),
             "first_name": getattr(user, "first_name", None),
             "last_name": getattr(user, "last_name", None),
+            "phone": getattr(user, "phone", None),
             "created_at": getattr(user, "created_at", None).isoformat()
             if getattr(user, "created_at", None)
             else None,
@@ -80,6 +81,7 @@ class ProfileEditView(View):
 
         first_name = (request.POST.get("first_name") or "").strip()
         last_name = (request.POST.get("last_name") or "").strip()
+        phone_raw = (request.POST.get("phone") or "").strip()
 
         errors = {}
         if len(first_name) > 150:
@@ -87,9 +89,39 @@ class ProfileEditView(View):
         if len(last_name) > 150:
             errors["last_name"] = "Максимальная длина — 150 символов"
 
+        # phone validation (optional)
+        if phone_raw:
+            from app.services.auth.users.logic.phone import (
+                PHONE_VALIDATION_ERROR,
+                normalize_phone_number,
+            )
+
+            try:
+                normalized = normalize_phone_number(phone_raw)
+            except Exception:
+                errors["phone"] = PHONE_VALIDATION_ERROR
+            else:
+                # uniqueness check
+                from django.contrib.auth import get_user_model
+
+                U = get_user_model()
+                exists = (
+                    U.objects.filter(phone=normalized.number)
+                    .exclude(pk=user.pk)
+                    .exists()
+                )
+                if exists:
+                    errors["phone"] = "Phone already in use"
+
         if errors:
             props = self._build_props(user)
-            props.update({"first_name": first_name, "last_name": last_name})
+            props.update(
+                {
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "phone": phone_raw,
+                }
+            )
             wants_json = request.GET.get(
                 "format"
             ) == "json" or "application/json" in request.headers.get("Accept", "")
@@ -123,7 +155,17 @@ class ProfileEditView(View):
 
         user.first_name = first_name
         user.last_name = last_name
-        user.save(update_fields=["first_name", "last_name"])
+        updates = ["first_name", "last_name"]
+        if phone_raw:
+            # normalized already computed if phone_raw not empty and no errors
+            try:
+                normalized
+            except NameError:
+                normalized = None
+            if normalized:
+                user.phone = normalized.number
+                updates.append("phone")
+        user.save(update_fields=updates)
 
         wants_json = request.GET.get(
             "format"

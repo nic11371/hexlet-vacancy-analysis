@@ -7,6 +7,9 @@
     </head>
     <body>
         <main>
+            <header>
+                <a href="http://localhost:8000/auth/draft/">Назад</a>
+            </header>
             {% if messages %}
                 {% for message in messages %}<p>{{ message }}</p>{% endfor %}
             {% endif %}
@@ -32,7 +35,7 @@
                     </ul>
                 </section>
                 <section>
-                    <h2>Имя и фамилия</h2>
+                    <h2>Имя, фамилия и телефон</h2>
                     <form method="post">
                         {% csrf_token %}
                         {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
@@ -53,6 +56,15 @@
                                    maxlength="150"
                                    value="{{ props.last_name|default_if_none:'' }}" />
                             {% if errors.last_name %}<div style="color: red;">{{ errors.last_name }}</div>{% endif %}
+                        </div>
+                        <div>
+                            <label for="phone">Телефон (Россия)</label>
+                            <input id="phone"
+                                   name="phone"
+                                   type="tel"
+                                   maxlength="32"
+                                   value="{{ props.phone|default_if_none:'' }}" />
+                            {% if errors.phone %}<div style="color: red;">{{ errors.phone }}</div>{% endif %}
                         </div>
                         <div>
                             <button type="submit">Сохранить</button>
