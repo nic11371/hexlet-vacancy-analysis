@@ -20,6 +20,87 @@ class ProfileEditView(View):
             else None,
         }
 
+    def _wants_json(self, request):
+        return request.GET.get(
+            "format"
+        ) == "json" or "application/json" in request.headers.get("Accept", "")
+
+    def _wants_inertia(self, request):
+        return bool(request.headers.get("X-Inertia"))
+
+    def _validate_input(self, request, user, first_name, last_name, phone_raw):
+        errors = {}
+        if len(first_name) > 150:
+            errors["first_name"] = "Максимальная длина — 150 символов"
+        if len(last_name) > 150:
+            errors["last_name"] = "Максимальная длина — 150 символов"
+
+        normalized = None
+        if phone_raw:
+            from app.services.auth.users.logic.phone import (
+                PHONE_VALIDATION_ERROR,
+                normalize_phone_number,
+            )
+
+            try:
+                normalized = normalize_phone_number(phone_raw)
+            except Exception:
+                errors["phone"] = PHONE_VALIDATION_ERROR
+            else:
+                from django.contrib.auth import get_user_model
+
+                U = get_user_model()
+                exists = (
+                    U.objects.filter(phone=normalized.number)
+                    .exclude(pk=user.pk)
+                    .exists()
+                )
+                if exists:
+                    errors["phone"] = "Phone already in use"
+
+        return errors, normalized
+
+    def _error_response(self, request, user, first_name, last_name, phone_raw, errors):
+        props = self._build_props(user)
+        props.update(
+            {"first_name": first_name, "last_name": last_name, "phone": phone_raw}
+        )
+        if self._wants_inertia(request):
+            resp = inertia_render(request, "ProfileEdit", {**props, "errors": errors})
+            resp.status_code = 422
+            return resp
+        if self._wants_json(request):
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Validation error",
+                    "errors": errors,
+                    "props": props,
+                },
+                status=400,
+            )
+        return render(
+            request,
+            "account/draft_account_edit.html",
+            {"component": "ProfileEdit", "props": props, "errors": errors},
+            status=400,
+        )
+
+    def _redirect_after_save(self, request):
+        candidate_next = request.POST.get("next") or request.META.get("HTTP_REFERER")
+        if candidate_next and url_has_allowed_host_and_scheme(
+            url=candidate_next,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            url = candidate_next
+        else:
+            url = reverse("account_profile_edit")
+
+        resp = redirect(url)
+        resp.status_code = 303
+        return resp
+
     def get(self, request):
         wants_json = request.GET.get(
             "format"
@@ -83,74 +164,12 @@ class ProfileEditView(View):
         last_name = (request.POST.get("last_name") or "").strip()
         phone_raw = (request.POST.get("phone") or "").strip()
 
-        errors = {}
-        if len(first_name) > 150:
-            errors["first_name"] = "Максимальная длина — 150 символов"
-        if len(last_name) > 150:
-            errors["last_name"] = "Максимальная длина — 150 символов"
-
-        # phone validation (optional)
-        if phone_raw:
-            from app.services.auth.users.logic.phone import (
-                PHONE_VALIDATION_ERROR,
-                normalize_phone_number,
-            )
-
-            try:
-                normalized = normalize_phone_number(phone_raw)
-            except Exception:
-                errors["phone"] = PHONE_VALIDATION_ERROR
-            else:
-                # uniqueness check
-                from django.contrib.auth import get_user_model
-
-                U = get_user_model()
-                exists = (
-                    U.objects.filter(phone=normalized.number)
-                    .exclude(pk=user.pk)
-                    .exists()
-                )
-                if exists:
-                    errors["phone"] = "Phone already in use"
-
+        errors, normalized = self._validate_input(
+            request, user, first_name, last_name, phone_raw
+        )
         if errors:
-            props = self._build_props(user)
-            props.update(
-                {
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "phone": phone_raw,
-                }
-            )
-            wants_json = request.GET.get(
-                "format"
-            ) == "json" or "application/json" in request.headers.get("Accept", "")
-            wants_inertia = bool(request.headers.get("X-Inertia"))
-            if wants_inertia:
-                resp = inertia_render(
-                    request,
-                    "ProfileEdit",
-                    {**props, "errors": errors},
-                )
-                resp.status_code = 422
-                return resp
-
-            if wants_json:
-                return JsonResponse(
-                    {
-                        "status": "error",
-                        "message": "Validation error",
-                        "errors": errors,
-                        "props": props,
-                    },
-                    status=400,
-                )
-
-            return render(
-                request,
-                "account/draft_account_edit.html",
-                {"component": "ProfileEdit", "props": props, "errors": errors},
-                status=400,
+            return self._error_response(
+                request, user, first_name, last_name, phone_raw, errors
             )
 
         user.first_name = first_name
@@ -167,10 +186,7 @@ class ProfileEditView(View):
                 updates.append("phone")
         user.save(update_fields=updates)
 
-        wants_json = request.GET.get(
-            "format"
-        ) == "json" or "application/json" in request.headers.get("Accept", "")
-        if wants_json:
+        if self._wants_json(request):
             props = self._build_props(user)
             return JsonResponse(
                 {
@@ -182,18 +198,4 @@ class ProfileEditView(View):
             )
 
         messages.success(request, "Изменения сохранены")
-
-        # возврат после сохранения
-        candidate_next = request.POST.get("next") or request.META.get("HTTP_REFERER")
-        if candidate_next and url_has_allowed_host_and_scheme(
-            url=candidate_next,
-            allowed_hosts={request.get_host()},
-            require_https=request.is_secure(),
-        ):
-            url = candidate_next
-        else:
-            url = reverse("account_profile_edit")
-
-        resp = redirect(url)
-        resp.status_code = 303
-        return resp
+        return self._redirect_after_save(request)
