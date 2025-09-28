@@ -1,9 +1,8 @@
-from django.shortcuts import get_object_or_404
-from inertia import render
 from django.core.paginator import Paginator
-from .models import Profession
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
+from inertia import render
+
+from .models import Profession
 
 
 class ProfessionView(View):
@@ -17,7 +16,7 @@ class ProfessionView(View):
         vacancies = [
             {
                 "id": v.id,
-                "title": title,
+                "title": v.title,
                 "company": v.company,
                 "url": v.url,
             }
