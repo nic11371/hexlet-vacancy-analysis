@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const csrfToken = document.querySelector('meta[name=csrf-token]').getAttribute('content');
     axios.defaults.headers.common['X-CSRF-Token'] = csrfToken;
 
-    InertiaProgress.init();
+    InertiaProgress.init({ color: '#4B5563' });
 
     createInertiaApp({
         resolve: (name) => import(`./components/pages/${name}.tsx`),
