@@ -13,14 +13,19 @@ class VacancyParser(KeywordExtractor):
         parser = LineParser()
 
         data = dict.fromkeys([
-            'post',
+            'title',
             'company',
             'city',
             'salary',
             'link',
-            'busyness',
-            'phone'])
-        data['post'] = next(
+            'phone',
+            'schedule',
+            'experience',
+            'work_format',
+            'skills',
+            'address',
+            'description'])
+        data['title'] = next(
             (line.strip() for line in lines if line.strip()), None)
 
         actions = [
@@ -33,9 +38,9 @@ class VacancyParser(KeywordExtractor):
             ('city',
              lambda line: parser.extract_value(line)
              if self.matches(line, 'city') else None),
-            ('busyness',
+            ('schedule',
              lambda line: parser.extract_value(line)
-             if self.matches(line, 'busyness') else None),
+             if self.matches(line, 'schedule') else None),
             ('phone', parser.extract_phone),
             ('link', parser.extract_link)
         ]

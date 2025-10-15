@@ -13,7 +13,6 @@ class Channel(models.Model):
     )
     last_message_id = models.IntegerField(
         max_length=255,
-        unique=True,
         verbose_name=('last_message_id'),
         blank=True,
         null=True

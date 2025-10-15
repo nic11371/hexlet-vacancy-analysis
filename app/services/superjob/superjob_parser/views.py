@@ -5,16 +5,17 @@ from bs4 import BeautifulSoup
 from django.http import JsonResponse
 from dotenv import load_dotenv
 
-from .models import SuperJob
+from ...hh.hh_parser.models import Platform, Vacancy, City, Company
+from datetime import datetime
 
 load_dotenv()
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SJ_KEY')
 
 
 def superjob_list(request):
-    SuperJob.objects.all().delete()
+    #SuperJob.objects.all().delete()
     keyword = 'Python'
-    town = 'Москва'
+    town = 'Moscow'
     count = 4
 
     url = 'https://api.superjob.ru/2.0/vacancies'
@@ -37,8 +38,17 @@ def superjob_list(request):
             try:
                 company = item.get('client', {})
                 company_name = company.get('title', '')
-                company_id = company.get('id', '')
-                company_city = company.get('town', '')
+
+                company, city = None, None
+
+                platform, created = Platform.objects.get_or_create(name=Platform.SUPER_JOB)
+                if company_name:
+                    company, created = Company.objects.get_or_create(name=company_name)
+
+                city_name = item.get('town').get('title')
+                if city_name:
+                    city, created = City.objects.get_or_create(name=city_name)
+
                 salary_from = int(item.get('payment_from', 0))
                 salary_to = int(item.get('payment_to', 0))
                 salary_currency = item.get('currency', '')
@@ -61,28 +71,30 @@ def superjob_list(request):
                 experience = item.get('experience')
                 education = item.get('education')
                 type_of_work = item.get('type_of_work')
-                place_of_work = item.get('place_of_work')
-                city = item.get('town')
-                SuperJob.objects.update_or_create(
-                    superjob_id=item.get('id'),
+
+
+                Vacancy.objects.update_or_create(
+                    platform_vacancy_id=f'{Platform.SUPER_JOB}{item.get('id')}',
                     defaults={
+                        'platform': platform,
+                        'city': city,
+                        'company': company,
+                        'platform_vacancy_id': f'{Platform.SUPER_JOB}{item.get('id')}',
                         'title': item.get('profession', ''),
                         'url': item.get('link', ''),
-                        'company_name': company_name,
-                        'company_id': company_id,
-                        'company_city': company_city.get('title', ''),
                         'salary': salary,
                         'experience': experience.get('title', ''),
-                        'type_of_work': type_of_work.get('title', ''),
-                        'place_of_work': place_of_work.get('title', ''),
+                        'schedule': type_of_work.get('title', ''),
+                        'employment': type_of_work.get('title', ''),
                         'education': education.get('title', ''),
                         'description': description,
-                        'city': city.get('title', ''),
+                        'skills': item.get('candidat'),
                         'address': item.get('address', ''),
                         'contacts': item.get('phone', ''),
-                        'published_at': item.get('date_published', ''),
+                        'published_at': datetime.fromtimestamp(item.get('date_published', '')),
                     }
                 )
+
 
                 saved_count += 1
 

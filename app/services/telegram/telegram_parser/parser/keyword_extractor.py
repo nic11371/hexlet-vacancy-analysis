@@ -6,11 +6,14 @@ from ..models import KeyWord
 class KeywordExtractor:
     def __init__(self):
         self.keywords = {
+            'title': [],
             'company': [],
             'salary': [],
             'city': [],
-            'busyness': [],
-            'post': []
+            'schedule': [],
+            'address': [],
+            'experience': [],
+            'description': []
         }
 
     @sync_to_async
