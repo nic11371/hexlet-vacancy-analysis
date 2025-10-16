@@ -17,7 +17,7 @@ class SaveDataVacancy:
             company, created = Company.objects.get_or_create(name=parsed['company'])
         if parsed['city']:
             city, created = City.objects.get_or_create(name=parsed['city'])
-
+        print(parsed)
         Vacancy.objects.update_or_create(
             platform_vacancy_id=platform_vacancy_id,
             defaults={
@@ -27,14 +27,14 @@ class SaveDataVacancy:
                 'platform_vacancy_id': platform_vacancy_id,
                 'title': parsed['title'],
                 'salary': parsed['salary'],
-                'url': parsed['link'],
+                'url': parsed['url'],
                 'experience': parsed['experience'],
                 'schedule': parsed['schedule'],
                 'work_format': parsed['work_format'],
                 'skills': parsed['skills'],
                 'description': parsed['description'],
                 'address': parsed['address'],
-                'contacts': parsed['phone'],
+                'contacts': parsed['contacts'],
                 'published_at': datetime.datetime.now(),
             }
         )
