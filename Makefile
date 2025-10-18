@@ -1,4 +1,4 @@
-.PHONY: help run migrate migrations create-superuser shell test lint install 
+.PHONY: help run migrate migrations create-superuser shell test lint install
 
 create-superuser:
 	uv run manage.py createsuperuser
@@ -18,7 +18,7 @@ install:
 	uv sync
 
 lint:
-	uv run ruff check
+	uv run ruff check --fix
 
 migrations:
 	uv run manage.py makemigrations

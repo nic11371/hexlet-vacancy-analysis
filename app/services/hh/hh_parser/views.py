@@ -4,11 +4,10 @@ import requests
 from bs4 import BeautifulSoup
 from django.http import JsonResponse
 
-from .models import Vacancy, Platform, Company, City
+from .models import City, Company, Platform, Vacancy
 
 
 def vacancy_list(request):
-    Vacancy.objects.all().delete()
     query = 'Python'
     area = 1
     per_page = 4
@@ -38,24 +37,21 @@ def vacancy_list(request):
                 detail_response.raise_for_status()
                 item = detail_response.json()
 
-                city, full_address = None, None
-
-                employer = item.get('employer', None)
-                company = employer.get('name', None)
-                platform, created = Platform.objects.get_or_create(name=Platform.HH)
-
+                platform, _ = Platform.objects.get_or_create(name=Platform.HH)
+                employer = item.get('employer', {})
+                company = employer.get('name')
                 if company:
-                    company, created = Company.objects.get_or_create(name=company)
+                    company, _ = Company.objects.get_or_create(name=company)
 
-                address = item.get('address', None)
+                address = item.get('address')
                 if address:
-                    city = address.get('city', None)
-                    if city:
-                        city, created = City.objects.get_or_create(name=city)
-                    full_address = address.get('raw', None)
+                    city_name = address.get('city')
+                    if city_name:
+                        city, _ = City.objects.get_or_create(name=city_name)
+                    full_address = address.get('raw')
 
                 salary_data = item.get('salary', {})
-                salary = None
+                salary = ''
                 if salary_data:
                     salary_parts = []
                     if salary_data.get('from'):
@@ -67,7 +63,7 @@ def vacancy_list(request):
                     salary = ' '.join(salary_parts)
 
                 description = BeautifulSoup(
-                    item.get('description', ''),
+                    item.get('description'),
                     'html.parser'
                 ).get_text()
 
@@ -78,34 +74,38 @@ def vacancy_list(request):
                     [skill['name'] for skill in item.get('key_skills', [])]
                 )
 
-                experience = item.get('experience')
-                schedule = item.get('schedule')
+                title = item.get('name')
+                url = item.get('alternate_url')
+                experience = item.get('experience').get('name') \
+                if item.get('experience') else None
+                schedule = item.get('schedule').get('name') \
+                if item.get('schedule') else None
+                education = item.get('education', {}).get('level', {}).get('name')
+                employment = item.get('employment', {}).get('name')
+                contacts = item.get('contacts')
+                published_at = item.get('published_at')
+                platform_vacancy_id = f'{Platform.HH}{item.get('id')}'
+
                 Vacancy.objects.update_or_create(
-                    platform_vacancy_id=f'{Platform.HH}{item.get('id')}',
+                    platform_vacancy_id=platform_vacancy_id,
                     defaults={
                         'platform': platform,
                         'city': city,
                         'company': company,
-                        'platform_vacancy_id': f'{Platform.HH}{item.get('id')}',
-                        'title': item.get('name', ''),
+                        'platform_vacancy_id': platform_vacancy_id,
+                        'title': title,
                         'salary': salary,
-                        'url': item.get('alternate_url', ''),
-                        'experience': experience.get(
-                            'name', '') if experience else '',
-                        'schedule': schedule.get(
-                            'name', '') if schedule else '',
-                        'work_schedule_by_days': item.get(
-                            "work_schedule_by_days", [{}])[0].get("name", ""),
-                        'working_hours': item.get(
-                            "working_hours", [{}])[0].get("name", ""),
+                        'url': url,
+                        'experience': experience,
+                        'schedule': schedule,
                         'work_format': work_format,
                         'skills': skills,
+                        'education': education,
                         'description': description,
                         'address': full_address,
-                        'employment': item.get(
-                            'employment', {}).get('name', ''),
-                        'contacts': item.get('contacts', {}),
-                        'published_at': item.get('published_at', ''),
+                        'employment': employment,
+                        'contacts': contacts,
+                        'published_at': published_at,
                     }
                 )
 

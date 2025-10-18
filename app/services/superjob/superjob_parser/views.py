@@ -1,19 +1,18 @@
 import os
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 from django.http import JsonResponse
 from dotenv import load_dotenv
 
-from ...hh.hh_parser.models import Platform, Vacancy, City, Company
-from datetime import datetime
+from ...hh.hh_parser.models import City, Company, Platform, Vacancy
 
 load_dotenv()
 SECRET_KEY = os.getenv('SJ_KEY')
 
 
 def superjob_list(request):
-    #SuperJob.objects.all().delete()
     keyword = 'Python'
     town = 'Moscow'
     count = 4
@@ -45,13 +44,13 @@ def superjob_list(request):
                 if company_name:
                     company, created = Company.objects.get_or_create(name=company_name)
 
-                city_name = item.get('town').get('title')
+                city_name = item.get('town', {}).get('title')
                 if city_name:
                     city, created = City.objects.get_or_create(name=city_name)
 
                 salary_from = int(item.get('payment_from', 0))
                 salary_to = int(item.get('payment_to', 0))
-                salary_currency = item.get('currency', '')
+                salary_currency = item.get('currency')
                 salary = 'По договоренности'
                 if salary_from or salary_to:
                     salary_parts = []
@@ -68,33 +67,40 @@ def superjob_list(request):
                     'html.parser'
                 ).get_text()
 
-                experience = item.get('experience')
-                education = item.get('education')
-                type_of_work = item.get('type_of_work')
-
+                title = item.get('profession')
+                experience = item.get('experience', {}).get('title')
+                education = item.get('education', {}).get('title'),
+                type_of_work = item.get('type_of_work', {}).get('title')
+                place_of_work = item.get('place_of_work', {}).get('title')
+                skills = item.get('candidat')
+                address = item.get('address')
+                link = item.get('link')
+                published_at = datetime.fromtimestamp(item.get('date_published'))
+                platform_vacancy_id = f'{Platform.SUPER_JOB}{item.get('id')}'
+                contacts = item.get('phone')
 
                 Vacancy.objects.update_or_create(
-                    platform_vacancy_id=f'{Platform.SUPER_JOB}{item.get('id')}',
+                    platform_vacancy_id=platform_vacancy_id,
                     defaults={
                         'platform': platform,
                         'city': city,
                         'company': company,
-                        'platform_vacancy_id': f'{Platform.SUPER_JOB}{item.get('id')}',
-                        'title': item.get('profession', ''),
-                        'url': item.get('link', ''),
+                        'platform_vacancy_id': platform_vacancy_id,
+                        'title': title,
+                        'url': link,
                         'salary': salary,
-                        'experience': experience.get('title', ''),
-                        'schedule': type_of_work.get('title', ''),
-                        'employment': type_of_work.get('title', ''),
-                        'education': education.get('title', ''),
+                        'experience': experience,
+                        'schedule': type_of_work,
+                        'employment': type_of_work,
+                        'work_format': place_of_work,
+                        'education': education,
                         'description': description,
-                        'skills': item.get('candidat'),
-                        'address': item.get('address', ''),
-                        'contacts': item.get('phone', ''),
-                        'published_at': datetime.fromtimestamp(item.get('date_published', '')),
+                        'skills': skills,
+                        'address': address,
+                        'contacts': contacts,
+                        'published_at': published_at,
                     }
                 )
-
 
                 saved_count += 1
 

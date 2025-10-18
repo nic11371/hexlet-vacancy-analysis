@@ -1,23 +1,25 @@
 import datetime
+import uuid
 
 from asgiref.sync import sync_to_async
-import uuid
-from app.services.hh.hh_parser.models import Vacancy, Platform, Company, City
+
+from app.services.hh.hh_parser.models import City, Company, Platform, Vacancy
 
 
 class SaveDataVacancy:
     @sync_to_async
     def save_vacancy(self, parsed, date):
 
-        platform_vacancy_id =  f'{Platform.TELEGRAM}{uuid.uuid4()}'
         city, company = None, None
 
         platform, created = Platform.objects.get_or_create(name=Platform.TELEGRAM)
         if parsed['company']:
-            company, created = Company.objects.get_or_create(name=parsed['company'])
+            company, _ = Company.objects.get_or_create(name=parsed['company'])
         if parsed['city']:
-            city, created = City.objects.get_or_create(name=parsed['city'])
-        print(parsed)
+            city, _ = City.objects.get_or_create(name=parsed['city'])
+
+        platform_vacancy_id = f'{Platform.TELEGRAM}{uuid.uuid4()}'
+
         Vacancy.objects.update_or_create(
             platform_vacancy_id=platform_vacancy_id,
             defaults={

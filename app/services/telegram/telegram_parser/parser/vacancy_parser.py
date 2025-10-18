@@ -1,4 +1,5 @@
 from app.services.hh.hh_parser.models import Vacancy
+
 from .keyword_extractor import KeywordExtractor
 from .line_parser import LineParser
 
@@ -33,6 +34,12 @@ class VacancyParser(KeywordExtractor):
             ('schedule',
              lambda line: parser.extract_value(line)
              if self.matches(line, 'schedule') else None),
+            ('work_format',
+             lambda line: parser.extract_value(line)
+             if self.matches(line, 'work_format') else None),
+            ('skills',
+             lambda line: parser.extract_value(line)
+             if self.matches(line, 'skills') else None),
             ('description',
              lambda line: parser.extract_value(line)
              if self.matches(line, 'description') else None),

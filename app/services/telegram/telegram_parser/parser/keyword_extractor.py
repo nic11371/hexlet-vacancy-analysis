@@ -10,6 +10,8 @@ class KeywordExtractor:
     @sync_to_async
     def load_keywords(self):
         kw = KeyWord.objects.all()
+        if not kw:
+            raise ValueError('KeyWords data not found')
         self.keywords = list(kw.values())[0]
 
     def matches(self, line, field):

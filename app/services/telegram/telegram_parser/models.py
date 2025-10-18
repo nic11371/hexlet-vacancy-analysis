@@ -1,32 +1,17 @@
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
 class KeyWord(models.Model):
-    title = ArrayField(models.CharField(
-        max_length=255, verbose_name=('title'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    company = ArrayField(models.CharField(
-        max_length=255, verbose_name=('company'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    salary = ArrayField(models.CharField(
-        max_length=255, verbose_name=('salary'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    schedule = ArrayField(models.CharField(
-        max_length=255, verbose_name=('schedule'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    city = ArrayField(models.CharField(
-        max_length=255, verbose_name=('city'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    experience = ArrayField(models.CharField(
-        max_length=255, verbose_name=('experience'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    address = ArrayField(models.CharField(
-        max_length=255, verbose_name=('address'), blank=True, null=True
-    ), default=list, blank=True, null=True)
-    description = ArrayField(models.CharField(
-        max_length=255, verbose_name=('description'), blank=True, null=True
-    ), default=list, blank=True, null=True)
+    title = models.JSONField(verbose_name='title', default=list, blank=True)
+    company = models.JSONField(verbose_name='company', default=list, blank=True)
+    salary = models.JSONField(verbose_name='salary', default=list, blank=True)
+    schedule = models.JSONField(verbose_name='schedule', default=list, blank=True)
+    city = models.JSONField(verbose_name='city', default=list, blank=True)
+    experience = models.JSONField(verbose_name='experience', default=list, blank=True)
+    skills = models.JSONField(verbose_name='skills', default=list, blank=True)
+    work_format = models.JSONField(verbose_name='work_format', default=list, blank=True)
+    address = models.JSONField(verbose_name='address', default=list, blank=True)
+    description = models.JSONField(verbose_name='description', default=list, blank=True)
 
     def __str__(self):
-        return 'Telegram keywords'
+        return f'Telegram keywords - {self.id}'
