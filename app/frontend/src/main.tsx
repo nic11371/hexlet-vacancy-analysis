@@ -1,32 +1,26 @@
-import './index.css';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { createInertiaApp } from '@inertiajs/react';
+import "vite/modulepreload-polyfill";
+import { createRoot } from "react-dom/client";
+import { createInertiaApp } from "@inertiajs/react";
 import { InertiaProgress } from '@inertiajs/progress';
+import axios from 'axios';
+import React from 'react';
+document.addEventListener('DOMContentLoaded', () => {
 
-type PageModule = {
-  default: React.ComponentType & { layout?: (page: React.ReactNode) => React.ReactNode };
-};
+    const csrfToken = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+    axios.defaults.headers.common['X-CSRF-Token'] = csrfToken;
 
-InertiaProgress.init({ color: '#4B5563' });
+    InertiaProgress.init({ color: '#4B5563' });
 
-createInertiaApp({
-  resolve: (name) => {
-    const pages = import.meta.glob<PageModule>('./pages/**/*.tsx', { eager: true });
-    const pageModule = pages[`./pages/${name}.tsx`];
+    createInertiaApp({
+        resolve: (name) => import(`./components/pages/${name}.tsx`),
+        setup({ el, App, props }: {
+            el: HTMLElement,
+            App: React.ComponentType<{ page: any }>,
+            props: any
+        }) {
+            const root = createRoot(el);
+            root.render(<App {...props} />);
+        },
+    });
 
-    if (!pageModule) {
-      throw new Error(`Unknown page ${name}.`);
-    }
-
-    const page = pageModule.default;
-
-    page.layout = page.layout || ((page: React.ReactNode) => page);
-
-    return page;
-  },
-
-  setup({ el, App, props }) {
-    createRoot(el).render(<App {...props} />);
-  },
 });
