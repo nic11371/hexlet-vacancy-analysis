@@ -15,7 +15,10 @@ help:
 	@echo "  make test               - Запустить тесты"
 
 install:
-	uv sync && cd app/frontend && uv run npm install && uv run npm run build
+	uv sync && cd app/frontend && uv run npm install
+
+build:
+	cd app/frontend && uv run npm run build
 
 collectstatic:
 	uv run manage.py collectstatic
