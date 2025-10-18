@@ -55,3 +55,6 @@ docker-logs:
 
 docker-build:
 	docker compose build
+
+render:
+	uv run gunicorn app.wsgi:application
