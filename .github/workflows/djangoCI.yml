@@ -21,6 +21,11 @@ jobs:
       - name: Install dependencies
         run: |
           make install 
+      
+      - name: Build
+        run: |
+          make build
+          make collectstatic
 
       - name: Run linter
         run: |
