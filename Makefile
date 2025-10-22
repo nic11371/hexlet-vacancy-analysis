@@ -21,7 +21,7 @@ build:
 	cd app/frontend && uv run npm run build
 
 collectstatic:
-	uv run manage.py collectstatic
+	uv run manage.py collectstatic --noinput
 
 lint:
 	uv run ruff check
