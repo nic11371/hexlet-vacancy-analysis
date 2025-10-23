@@ -17,6 +17,12 @@ help:
 install:
 	uv sync && cd app/frontend && uv run npm install
 
+build:
+	cd app/frontend && uv run npm run build
+
+collectstatic:
+	uv run manage.py collectstatic --noinput
+
 lint:
 	uv run ruff check
 
@@ -52,3 +58,6 @@ docker-logs:
 
 docker-build:
 	docker compose build
+
+render:
+	uv run gunicorn app.wsgi:application

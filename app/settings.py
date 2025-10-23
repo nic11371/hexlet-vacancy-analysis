@@ -35,7 +35,6 @@ ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",")]
 # Application definition
 
 INSTALLED_APPS = [
-    "app.services.auth.users",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -44,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_vite",
     "inertia",
+    "app.services.auth.users",
     "app.services.hh.hh_parser",
     "app.services.telegram.telegram_parser",
     "app.services.telegram.telegram_channels",
@@ -54,6 +54,7 @@ AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -89,9 +90,7 @@ WSGI_APPLICATION = "app.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.{}".format(
-            os.getenv("DATABASE_ENGINE", "sqlite3")
-        ),
+        "ENGINE": "django.db.backends.{}".format(os.getenv("DATABASE_ENGINE", "sqlite3")),
         "NAME": os.getenv("DATABASE_NAME", "postgres"),
         "USER": os.getenv("DATABASE_USER", "postgres"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
