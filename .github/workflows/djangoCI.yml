@@ -40,10 +40,20 @@ jobs:
         run: |
           make install-backend
 
+      - name: Cache node modules
+        id: npm-cache
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-
+
       - name: Install frontend dependencies
-        working-directory: app/frontend
         run: |
-          npm ci
+          make install-frontend 
 
       - name: Cache static files
         id: static-cache
