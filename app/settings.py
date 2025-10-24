@@ -35,7 +35,6 @@ ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",")]
 # Application definition
 
 INSTALLED_APPS = [
-    "app.services.auth.users",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -44,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_vite",
     "inertia",
+    "app.services.auth.users",
     "app.services.hh.hh_parser",
     "app.services.telegram.telegram_parser",
     "app.services.telegram.telegram_channels",
@@ -55,6 +55,7 @@ AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -105,7 +106,7 @@ DATABASES = {
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
-
+#
 # DATABASE_URL = os.getenv('DATABASE_URL')
 # if DATABASE_URL:
 #     DATABASES['default'] = dj_database_url.config(

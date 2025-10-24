@@ -33,7 +33,6 @@ TINKOFF_ID_CLIENT_ID="clien_id"
 TINKOFF_ID_CLIENT_SECRET="secret_key"
 TINKOFF_ID_REDIRECT_URI="https://localhost/callback"
 ```
-
 Create a PostgreSQL user (or reuse an existing one) and a database using the parameters from DATABASE_URL.
 
 ## Installation:
@@ -83,4 +82,5 @@ make docker-up
 - проект становится доступен по ссылке - http://localhost:8000/
 
 .
+## Comments
  
