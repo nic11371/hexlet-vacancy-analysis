@@ -1,15 +1,8 @@
 from django.contrib import admin
 
+from ...utils.main import custom_title_filter_factory
 from .models import Vacancy
 
-
-def custom_title_filter_factory(filter_cls, title):
-    class Wrapper(filter_cls):
-        def __new__(cls, *args, **kwargs):
-            instance = filter_cls(*args, **kwargs)
-            instance.title = title
-            return instance
-    return Wrapper
 
 @admin.register(Vacancy)
 class VacancyAdmin(admin.ModelAdmin):
@@ -38,7 +31,7 @@ class VacancyAdmin(admin.ModelAdmin):
             )
         }),
         ('Location', {
-            'fields': ('city',),
+            'fields': ('city', 'address'),
             'classes': ('collapse',)
         }),
         ('Additional information', {

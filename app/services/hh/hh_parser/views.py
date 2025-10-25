@@ -43,6 +43,7 @@ def vacancy_list(request):
                 if company:
                     company, _ = Company.objects.get_or_create(name=company)
 
+                city, full_address = None, None
                 address = item.get('address')
                 if address:
                     city_name = address.get('city')

@@ -33,10 +33,10 @@ class City(models.Model):
 
 
 class Vacancy(models.Model):
-    platform = models.ForeignKey(Platform, related_name='vacancies', on_delete=models.CASCADE)
+    platform = models.ForeignKey(Platform, related_name='vacancies', on_delete=models.CASCADE, null=True)
     company = models.ForeignKey(Company, related_name='vacancies', on_delete=models.CASCADE, null=True)
     city = models.ForeignKey(City, related_name='vacancies', on_delete=models.SET_NULL, null=True)
-    platform_vacancy_id = models.CharField(max_length=25)
+    platform_vacancy_id = models.CharField(max_length=25, null=True)
     title = models.CharField(max_length=255)
     url = models.URLField(unique=True, default='', blank=True, null=True)
     salary = models.CharField(max_length=120, default='', blank=True, null=True)
