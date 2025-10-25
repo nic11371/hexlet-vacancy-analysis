@@ -82,11 +82,12 @@ class AddChannelView(View):
         })
 
     async def post(self, request, *args, **kwargs):
-        data = request.POST
+        data = request.POST.dict()
 
         client_wrapper = await TelegramChannelClient.create()
         client = client_wrapper.client
         username = data.get('username')
+
         exist = ExistsTelegramChannel()
         exists = await exist.check_channel_exists(client, username)
 
