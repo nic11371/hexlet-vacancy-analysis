@@ -1,9 +1,12 @@
 import datetime
 import uuid
+import logging
 
 from asgiref.sync import sync_to_async
 
 from app.services.hh.hh_parser.models import City, Company, Platform, Vacancy
+
+logger = logging.getLogger(__name__)
 
 
 class SaveDataVacancy:
@@ -12,7 +15,7 @@ class SaveDataVacancy:
 
         city, company = None, None
 
-        platform, created = Platform.objects.get_or_create(name=Platform.TELEGRAM)
+        platform, _ = Platform.objects.get_or_create(name=Platform.TELEGRAM)
         if parsed['company']:
             company, _ = Company.objects.get_or_create(name=parsed['company'])
         if parsed['city']:
@@ -40,4 +43,4 @@ class SaveDataVacancy:
                 'published_at': datetime.datetime.now(),
             }
         )
-        print("Запись в модель")
+        logger.info("Данные в модель успешно записаны")
