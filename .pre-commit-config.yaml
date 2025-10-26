@@ -19,7 +19,7 @@ repos:
 
   # JavaScript/TypeScript linting with ESLint
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.25.0
+    rev: v9.38.0
     hooks:
       - id: eslint
         files: \.(js|jsx|ts|tsx)$
