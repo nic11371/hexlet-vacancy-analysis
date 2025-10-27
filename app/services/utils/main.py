@@ -4,4 +4,5 @@ def custom_title_filter_factory(filter_cls, title):
             instance = filter_cls(*args, **kwargs)
             instance.title = title
             return instance
+
     return Wrapper
