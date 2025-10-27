@@ -1,6 +1,7 @@
 import json
 import re
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import Client, TestCase
@@ -26,15 +27,19 @@ class BaseAuthTest(TestCase):
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)
         self.client.get("/auth/csrf/")
-        self.csrf_token = self.client.cookies["csrftoken"].value
+        self.csrf_cookie_name = getattr(settings, "CSRF_COOKIE_NAME", "csrftoken")
+        self.csrf_header_name = getattr(settings, "CSRF_HEADER_NAME", "HTTP_X_CSRFTOKEN")
+        self.csrf_token = self.client.cookies[self.csrf_cookie_name].value
+
+    def csrf_headers(self, token=None):
+        return {self.csrf_header_name: token or self.csrf_token}
 
     def register_user(self, client, data):
-        token = self.csrf_token
         response = client.post(
             "/auth/register/",
             data=json.dumps(data),
             content_type="application/json",
-            HTTP_X_CSRFTOKEN=token,
+            **self.csrf_headers(),
         )
         return response
 
@@ -111,7 +116,7 @@ class UsersTest(BaseAuthTest):
             "/auth/login/",
             data=json.dumps(login_data),
             content_type="application/json",
-            HTTP_X_CSRFTOKEN=self.csrf_token,
+            **self.csrf_headers(),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -136,17 +141,17 @@ class UsersTest(BaseAuthTest):
             "/auth/login/",
             data=json.dumps(login_data),
             content_type="application/json",
-            HTTP_X_CSRFTOKEN=self.csrf_token,
+            **self.csrf_headers(),
         )
         self.assertEqual(response.status_code, 200)
 
         self.client.get("/auth/csrf/")
-        self.csrf_token = self.client.cookies["csrftoken"].value
+        self.csrf_token = self.client.cookies[self.csrf_cookie_name].value
 
         response = self.client.post(
             "/auth/logout/",
             content_type="application/json",
-            HTTP_X_CSRFTOKEN=self.csrf_token,
+            **self.csrf_headers(),
         )
 
         self.assertEqual(response.status_code, 200)
