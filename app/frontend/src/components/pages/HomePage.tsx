@@ -10,6 +10,7 @@ interface HomePageProps {
 
 const HomePage: React.FC = () => {
   const { props } = usePage<HomePageProps>()
+  console.log(props.vacancies);
   return (
     <div>
       <h1 className="text-3xl font-bold">Главная</h1>

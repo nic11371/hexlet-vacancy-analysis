@@ -5,11 +5,11 @@ export interface VacancyCardProps {
   salary: string;
   experience?: string;
   employment?: string;
-  company: {
+  company?: {
     id: number;
     name: string;
   };
-  city: {
+  city?: {
     id: number;
     name: string;
   };

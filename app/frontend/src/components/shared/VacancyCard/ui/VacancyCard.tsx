@@ -9,9 +9,9 @@ export const VacancyCard:React.FC<VacancyCardProps> = ({ id, title, url, salary,
       <p>{url}</p>
       <p>{salary}</p>
       <p>{employment}</p>
-      <p>{company.name}</p>
-      <p>{city.name}</p>
-      <p>{skills}</p>
+      <p>{company ? company.name : 'Без компании'}</p>
+      <p>{city ? city.name : 'Без города'}</p>
+      <p>{skills.join(',')}</p>
     </div>
   )
 }
