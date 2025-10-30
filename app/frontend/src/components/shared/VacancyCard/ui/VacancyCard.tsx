@@ -4,7 +4,13 @@ import { Card, Group, Text, Badge, Button, Stack, Box } from '@mantine/core';
 import { Building2, MapPin } from "lucide-react";
 import { Link } from "@inertiajs/react";
 
-export const VacancyCard: React.FC<VacancyCardProps> = ({ id, title, url, salary, employment, company, city, skills }) => {
+export interface VacancyCardPropsWrapper {
+  props: VacancyCardProps;
+}
+
+export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
+const { id, title, url, salary, employment, company, city, skills } = props;
+
   return (
     <Link href={url || `/vacancies/${id}`} style={{ textDecoration: 'none' }}>
      <Card shadow="sm" padding="lg" radius="md" withBorder mx="auto" style={{ width: '100%'}}>
