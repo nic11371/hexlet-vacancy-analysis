@@ -1,6 +1,6 @@
 import { VacancyCard } from "../shared/VacancyCard";
 import { usePage } from "@inertiajs/react";
-import type { VacancyCardProps } from "../shared/VacancyCard/model/types";
+import type { VacancyCardProps } from "../../types";
 import type React from "react";
 import { Card } from "@mantine/core";
 

@@ -1,5 +1,5 @@
-import type React from "react";
-import type { VacancyCardProps } from "../model/types";
+import React from "react";
+import type { VacancyCardProps } from "../../../../types";
 import { Card, Group, Text, Badge, Button, Stack, Box } from '@mantine/core';
 import { Building2, MapPin } from "lucide-react";
 import { Link } from "@inertiajs/react";
