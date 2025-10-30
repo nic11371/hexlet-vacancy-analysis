@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from inertia import render as inertia_render
 
+
 def index(request):
     return inertia_render(
         request,
