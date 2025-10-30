@@ -2,6 +2,7 @@ import { VacancyCard } from "../shared/VacancyCard";
 import { usePage } from "@inertiajs/react";
 import type { VacancyCardProps } from "../shared/VacancyCard/model/types";
 import type React from "react";
+import { Card } from "@mantine/core";
 
 interface HomePageProps {
   vacancies: VacancyCardProps[];
@@ -15,20 +16,22 @@ const HomePage: React.FC = () => {
     <div>
       <h1 className="text-3xl font-bold">Главная</h1>
       <p className="mt-4">Информация.</p>
-      {props.vacancies.map((vacancy) => (
-        <VacancyCard 
-          id={vacancy.id}
-          key={vacancy.id}
-          title={vacancy.title}
-          salary={vacancy.salary}
-          company={vacancy.company}
-          city={vacancy.city}
-          employment={vacancy.employment}
-          skills={vacancy.skills}
-          url={vacancy.url}
-        />
-      ))}
-
+      <Card>
+        {props.vacancies.map((vacancy) => (
+          <Card key={vacancy.id}>
+              <VacancyCard 
+              id={vacancy.id}
+              title={vacancy.title}
+              salary={vacancy.salary}
+              company={vacancy.company}
+              city={vacancy.city}
+              employment={vacancy.employment}
+              skills={vacancy.skills}
+              url={vacancy.url}
+            />
+          </Card>
+        ))}
+      </Card>
     </div>
   );
 };
