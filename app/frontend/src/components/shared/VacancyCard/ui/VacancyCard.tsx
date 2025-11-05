@@ -1,7 +1,8 @@
 import React from "react";
 import type { VacancyCardProps } from "../../../../types";
 import { Card, Group, Text, Badge, Button, Stack, Box } from '@mantine/core';
-import { Building2, MapPin } from "lucide-react";
+import { Building2, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { Link } from "@inertiajs/react";
 
 interface VacancyCardPropsWrapper {
@@ -11,9 +12,18 @@ interface VacancyCardPropsWrapper {
 export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
 
   const { id, title, url, salary, employment, company, city, skills } = props;
+
+  const [skillsExpanded, setSkillsExpanded] = useState(false);
+
+  const skillsCutDesktop = skills.slice(0,12);
+  const remainingSkillsCount = skills.length - 3;
+  const hasMoreSkills = skills.length > 3;
+
+  const displayedSkills = skillsExpanded ? skills : skills.slice(0, 3);
+
   return (
     <Link href={url || `/vacancies/${id}`} style={{ textDecoration: 'none' }}>
-     <Card shadow="sm" padding="lg" radius="md" withBorder mx="auto" style={{ width: '100%'}}>
+     <Card shadow="sm" padding="lg" radius="md" withBorder mx="auto" style={{ width: '100%'}} mb={20}>
       {/* Десктопная версия */}
       <Group justify="space-between" wrap="nowrap" visibleFrom="sm">
         {/* Левая часть */}
@@ -42,23 +52,23 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
             </Group>
 
             {/* Навыки */}
-        <Group wrap="wrap" gap="xs">
-          {skills && skills.length > 0 ? (
-            skills.map((skill) => (
-              <Badge 
-                key={skill} 
-                color="#20B0B4"
-                variant="outline"
-                size="md"
-                style={{ width: 'auto' }}
-              >
-                {skill}
-              </Badge>
-            ))
-          ) : (
-            <Text fw={700} size="md" c="#0d2e4e">Необходимые навыки не указаны</Text>
-          )}
-        </Group>
+            <Group wrap="wrap" gap="xs">
+              {skills && skills.length > 0 ? (
+                skillsCutDesktop.map((skill) => (
+                  <Badge 
+                    key={skill} 
+                    color="#20B0B4"
+                    variant="outline"
+                    size="md"
+                    style={{ width: 'auto'}}
+                  >
+                    {skill}
+                  </Badge>
+                ))
+              ) : (
+                <Text fw={700} size="md" c="#0d2e4e">Необходимые навыки не указаны</Text>
+              )}
+            </Group>
           </Stack>
         </Box>
 
@@ -113,23 +123,49 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
         }
 
         {/* Навыки */}
-        <Group wrap="wrap" gap="xs">
-          {skills && skills.length > 0 ? (
-            skills.map((skill) => (
-              <Badge 
-                key={skill} 
-                color="#20B0B4"
-                variant="outline"
-                size="md"
-                style={{ width: 'auto' }}
-              >
-                {skill}
-              </Badge>
-            ))
-          ) : (
-            <Text fw={700} size="md" c="#0d2e4e">Необходимые навыки не указаны</Text>
-          )}
-        </Group>
+         <Stack gap="xs">
+          <Group wrap="wrap" gap="xs" style={{ alignItems: 'center' }}>
+            {skills && skills.length > 0 ? (
+              <>
+                {displayedSkills.map((skill) => (
+                  <Badge 
+                    key={skill} 
+                    color="#20B0B4"
+                    variant="outline"
+                    size="md"
+                    style={{ width: 'auto', flexShrink: 0 }}
+                  >
+                    {skill}
+                  </Badge>
+                ))}
+                
+                {/* Кнопка для показа/скрытия навыков */}
+                {hasMoreSkills && (
+                  <Button
+                    variant="subtle"
+                    color="#20B0B4"
+                    size="compact-md"
+                    radius='xl'
+                    style={{ 
+                      height: '32px',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0 10px'
+                    }}
+                    onClick={() => setSkillsExpanded(!skillsExpanded)}
+                  >
+                    <span>{skillsExpanded ? 'Свернуть' : `...ещё ${remainingSkillsCount}`}</span>
+                    {skillsExpanded ? <ChevronUp/> : <ChevronDown/>}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Text fw={700} size="md" c="#0d2e4e">Необходимые навыки не указаны</Text>
+            )}
+          </Group>
+        </Stack>
 
         <Button color="#20B0B4" radius='md' fullWidth>Откликнуться</Button>
       </Stack>
@@ -137,3 +173,4 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
     </Link>
   );
 };
+
