@@ -9,4 +9,5 @@ class Profession(models.Model):
     def __str__(self):
         return self.name
 
-
+    class InertiaMeta:
+        fields = ('name', 'slug', 'is_active')

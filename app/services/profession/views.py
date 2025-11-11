@@ -8,30 +8,36 @@ from .models import Profession
 class ProfessionView(View):
 
     def listing(self, request, *args, **kwargs):
-        professions = Profession.objects.all()
-        paginator = Paginator(professions, 25)
+        qs = Profession.objects.all()
+        paginator = Paginator(qs, 25)
         page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
+        page = paginator.get_page(page_number)
 
-        vacancies = [
+        professions = [
             {
-                "id": v.id,
-                "title": v.title,
-                "company": v.company,
-                "url": v.url,
+                "id": p.id,
+                "name": p.name,
+                "slug": p.slug,
             }
-            for v in page_obj.object_list
+            for p in page.object_list
         ]
 
         props = {
-            "profession": {
-                "id": professions.id,
-                "name": professions.name,
-                "slug": professions.slug
-            },
-            "vacancies": {
-                "data": vacancies,
+            "professions": {
+                "data": professions,
+                "pagination": {
+                    "page": page.number,
+                    "pages": paginator.num_pages,
+                    "has_next": page.has_next(),
+                    "has_prev": page.has_previous(),
+                    "next_page":
+                        page.next_page_number() if page.has_next() else None,
+                    "prev_page":
+                        page.previous_page_number() if page.has_previous() else None,
+                    "per_page": paginator.per_page,
+                    "total": paginator.count,
+                    },
                 }
             }
 
-        return render(request, "ProfessionPage", props)
+        return render(request, "ProfessionPage/lists", props=props)
