@@ -1,9 +1,9 @@
 import React from "react";
 import type { VacancyCardProps } from "../../../../types";
 import { Card, Group, Text, Badge, Button, Stack, Box } from '@mantine/core';
-import { Building2, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Building2, MapPin, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { useState } from "react";
-import { Link } from "@inertiajs/react";
+import { router } from "@inertiajs/core";
 
 interface VacancyCardPropsWrapper {
   props: VacancyCardProps;
@@ -21,9 +21,27 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
 
   const displayedSkills = skillsExpanded ? skills : skills.slice(0, 3);
 
+  const handleCardLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.get(`/vacancies/${id}`)
+  };
+
+  const handleButtonLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(url, '_blank')
+  }
+
   return (
-    <Link href={url || `/vacancies/${id}`} style={{ textDecoration: 'none' }}>
-     <Card shadow="sm" padding="lg" radius="md" withBorder mx="auto" style={{ width: '100%'}} mb={20}>
+     <Card 
+      shadow="sm" 
+      padding="lg" 
+      radius="md" 
+      withBorder 
+      mx="auto" 
+      style={{ width: '100%', cursor: 'pointer'}} 
+      mb={20}
+      onClick={handleCardLink}
+      >
       {/* Десктопная версия */}
       <Group justify="space-between" wrap="nowrap" visibleFrom="sm">
         {/* Левая часть */}
@@ -83,9 +101,12 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
             w='fit-content' 
             color="#20B0B4" 
             radius='md'
-            onClick={(e) => e.preventDefault()}
+            onClick={handleButtonLink}
           >
-            Откликнуться
+            <Group gap={10}>
+              <Send size={15}/>
+              <span>Откликнуться</span>
+            </Group>
           </Button>
         </Stack>
       </Group>
@@ -154,7 +175,10 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
                       gap: '6px',
                       padding: '0 10px'
                     }}
-                    onClick={() => setSkillsExpanded(!skillsExpanded)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSkillsExpanded(!skillsExpanded)}
+                    }
                   >
                     <span>{skillsExpanded ? 'Свернуть' : `...ещё ${remainingSkillsCount}`}</span>
                     {skillsExpanded ? <ChevronUp/> : <ChevronDown/>}
@@ -167,10 +191,18 @@ export const VacancyCard: React.FC<VacancyCardPropsWrapper> = ({ props }) => {
           </Group>
         </Stack>
 
-        <Button color="#20B0B4" radius='md' fullWidth>Откликнуться</Button>
+        <Button 
+          color="#20B0B4" 
+          radius='md' 
+          fullWidth
+        >
+          <Group gap={10}>
+            <Send size={15}/>
+            <span>Откликнуться</span>
+          </Group>
+        </Button>
       </Stack>
     </Card>
-    </Link>
   );
 };
 
